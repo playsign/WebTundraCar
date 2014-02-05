@@ -17,20 +17,46 @@ app.start();
 
 // Custom app specific properties
 
+// PHYSI.JS
+
+Physijs.scripts.worker = 'physijs_worker.js';
+Physijs.scripts.ammo = 'ammo.js';
+
+// Ground
+var ground_material = Physijs.createMaterial(
+    new THREE.MeshLambertMaterial({
+    map: THREE.ImageUtils.loadTexture('images/rocks.jpg')
+}),
+    .8, // high friction
+.3 // low restitution
+);
+ground_material.map.wrapS = ground_material.map.wrapT = THREE.RepeatWrapping;
+ground_material.map.repeat.set(3, 3);
+
+var ground = new Physijs.BoxMesh(
+    new THREE.CubeGeometry(200, 1, 200),
+    ground_material,
+    0 // mass
+);
+ground.position.set(0,-5,0);
+ground.receiveShadow = true;
+app.viewer.scene.add(ground);
+
+
 // CAR
 
 app.car = new THREE.Car();
 app.car.modelScale = 0.8;
 app.car.backWheelOffset = 0.02;
 
-app.car.MAX_SPEED = 0.9; //25
-app.car.MAX_REVERSE_SPEED = -0.5; //-15
-app.car.FRONT_ACCELERATION = 0.4; //12
-app.car.BACK_ACCELERATION = 0.5; //15
+app.car.MAX_SPEED = 25; //25
+app.car.MAX_REVERSE_SPEED = -15; //-15
+app.car.FRONT_ACCELERATION = 25; //12
+app.car.BACK_ACCELERATION = 15; //15
 
-app.car.WHEEL_ANGULAR_ACCELERATION = 1; //1.5
+app.car.WHEEL_ANGULAR_ACCELERATION = 1.5; //1.5
 
-app.car.FRONT_DECCELERATION = 0.5 //10
+app.car.FRONT_DECCELERATION = 10; //10
 app.car.WHEEL_ANGULAR_DECCELERATION = 1; //1.0
 
 app.car.STEERING_RADIUS_RATIO = 0.23; //0.23
@@ -41,13 +67,21 @@ app.car.callback = function(object) {
 
 app.car.loadPartsJSON("GreenCar.js", "GreenCar.js");
 
-// FREE LOOK
-var freeLookCtrl = new THREE.FreeLookControls(app.viewer.camera, app.viewer.renderer.domElement);
-app.scene.add(freeLookCtrl.getObject());
-// An object in freeLookCtrl that carries the camera. Set it's position instead of setting camera position directly
-freeLookCtrl.getObject().position.set(0, 8.50, 28.50);
+// CAMERA
+app.viewer.camera.position.set(0, 100, 87);
+app.viewer.camera.lookAt(new THREE.Vector3());
+
+// // FREE LOOK
+// var freeLookCtrl = new THREE.FreeLookControls(app.viewer.camera, app.viewer.renderer.domElement);
+// app.scene.add(freeLookCtrl.getObject());
+// // An object in freeLookCtrl that carries the camera. Set it's position instead of setting camera position directly
+// freeLookCtrl.getObject().position.set(0, 8.50, 28.50);
 
 // app.connect(host, port);
+
+app.logicUpdate = function(dt) {
+    app.viewer.scene.simulate(); // run physics
+};
 
 function addCar(object, x, y, z, s) {
     console.log("Add car");

@@ -16,10 +16,10 @@ THREE.Car = function() {
 
 	// hotkeys
 	this.hotkeys = {
-		forward: 't',
-		backward: 'g',
-		left: 'f',
-		right: 'h'
+		forward: 'w',
+		backward: 's',
+		left: 'a',
+		right: 'd'
 	};
 
 	// car geometry manual parameters
@@ -50,6 +50,10 @@ THREE.Car = function() {
 
 	this.MAX_WHEEL_ROTATION = 0.6;
 
+	this.MAX_PEDAL = 10;
+	this.PEDAL_ACCELERATION = 20;
+	this.PEDAL_DECCELERATION = 10;
+
 	this.FRONT_ACCELERATION = 1250;
 	this.BACK_ACCELERATION = 1500;
 
@@ -65,7 +69,7 @@ THREE.Car = function() {
 
 	// internal control variables
 
-	this.speed = 0;
+	this.pedal = 0;
 	this.acceleration = 0;
 
 	this.wheelOrientation = 0;
@@ -73,7 +77,23 @@ THREE.Car = function() {
 
 	// car rigging
 
-	this.root = new THREE.Object3D();
+	// this.root = new THREE.Object3D();
+
+	var friction = .8; // high friction
+	var restitution = .3; // low restitution
+
+	var carMaterial = Physijs.createMaterial(
+		new THREE.MeshBasicMaterial({
+		color: 0x888888,
+		transparent: true,
+		opacity: 0.0
+	}),
+		friction,
+		restitution);
+
+	this.root = new Physijs.BoxMesh(
+		new THREE.CubeGeometry(4, 2.5, 8),
+		carMaterial);
 
 	this.frontLeftWheelRoot = new THREE.Object3D();
 	this.frontRightWheelRoot = new THREE.Object3D();
@@ -153,6 +173,7 @@ THREE.Car = function() {
 
 			scope.bodyMesh = new THREE.Mesh(scope.bodyGeometry, faceMaterial);
 			scope.bodyMesh.scale.set(s, s, s);
+			scope.bodyMesh.position.y = -0.7;
 
 			scope.root.add(scope.bodyMesh);
 
@@ -307,7 +328,7 @@ THREE.Car = function() {
 
 		if (app.keyboard.pressed(this.hotkeys.forward)) {
 
-			this.speed = clamp(this.speed + delta * this.FRONT_ACCELERATION, this.MAX_REVERSE_SPEED, this.MAX_SPEED);
+			this.pedal = clamp(this.pedal + delta * this.PEDAL_ACCELERATION, -this.MAX_PEDAL, this.MAX_PEDAL);
 			this.acceleration = clamp(this.acceleration + delta, -1, 1);
 
 		}
@@ -315,7 +336,7 @@ THREE.Car = function() {
 		if (app.keyboard.pressed(this.hotkeys.backward)) {
 
 
-			this.speed = clamp(this.speed - delta * this.BACK_ACCELERATION, this.MAX_REVERSE_SPEED, this.MAX_SPEED);
+			this.pedal = clamp(this.pedal - delta * this.PEDAL_ACCELERATION, -this.MAX_PEDAL, this.MAX_PEDAL);
 			this.acceleration = clamp(this.acceleration - delta, -1, 1);
 
 		}
@@ -336,18 +357,18 @@ THREE.Car = function() {
 
 		if (!(app.keyboard.pressed(this.hotkeys.forward) || app.keyboard.pressed(this.hotkeys.backward))) {
 
-			if (this.speed > 0) {
+			if (this.pedal > 0) {
 
-				var k = exponentialEaseOut(this.speed / this.MAX_SPEED);
+				var k = exponentialEaseOut(this.pedal / this.MAX_PEDAL);
 
-				this.speed = clamp(this.speed - k * delta * this.FRONT_DECCELERATION, 0, this.MAX_SPEED);
+				this.pedal = clamp(this.pedal - k * delta * this.PEDAL_DECCELERATION, 0, this.MAX_PEDAL);
 				this.acceleration = clamp(this.acceleration - k * delta, 0, 1);
 
 			} else {
 
-				var k = exponentialEaseOut(this.speed / this.MAX_REVERSE_SPEED);
+				var k = exponentialEaseOut(this.pedal / -this.MAX_PEDAL);
 
-				this.speed = clamp(this.speed + k * delta * this.BACK_ACCELERATION, this.MAX_REVERSE_SPEED, 0);
+				this.pedal = clamp(this.pedal + k * delta * this.PEDAL_ACCELERATION, -this.MAX_PEDAL, 0);
 				this.acceleration = clamp(this.acceleration + k * delta, -1, 0);
 
 			}
@@ -372,25 +393,38 @@ THREE.Car = function() {
 		}
 
 		// car update
-		var forwardDelta = this.speed;
+		var forwardDelta = this.pedal * delta;
 
 		this.carOrientation += (forwardDelta * this.STEERING_RADIUS_RATIO) * this.wheelOrientation;
 
-		// displacement
+		// add velocity
 
+		var linVelocity = new THREE.Vector3(Math.sin(this.carOrientation) * forwardDelta, 0, Math.cos(this.carOrientation) * forwardDelta);
+		linVelocity.add(this.root.getLinearVelocity());
+		this.root.setLinearVelocity(linVelocity);
 
-		this.root.position.x += Math.sin(this.carOrientation) * forwardDelta;
-		this.root.position.z += Math.cos(this.carOrientation) * forwardDelta;
+		// console.clear();
+		// console.log(this.pedal);
+		// console.log(this.carOrientation);
+		// console.log(linVelocity);
+		// console.log(this.root.getLinearVelocity());
+
+		// this.root.position.x += Math.sin(this.carOrientation) * forwardDelta;
+		// this.root.position.z += Math.cos(this.carOrientation) * forwardDelta;
 
 		// steering
 
-		this.root.rotation.y = this.carOrientation;
+		// this.root.rotation.y = this.carOrientation;
+
+		if (this.loaded) {
+			this.bodyMesh.rotation.y = this.carOrientation;
+		}
 
 		// tilt
 
 		if (this.loaded) {
 
-			this.bodyMesh.rotation.z = this.MAX_TILT_SIDES * this.wheelOrientation * (this.speed / this.MAX_SPEED);
+			this.bodyMesh.rotation.z = this.MAX_TILT_SIDES * this.wheelOrientation * (this.pedal / this.MAX_PEDAL);
 			this.bodyMesh.rotation.x = -this.MAX_TILT_FRONTBACK * this.acceleration;
 
 		}
