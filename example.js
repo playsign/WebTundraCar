@@ -65,7 +65,7 @@ app.viewer.camera.lookAt(new THREE.Vector3());
 // // An object in freeLookCtrl that carries the camera. Set it's position instead of setting camera position directly
 // freeLookCtrl.getObject().position.set(0, 8.50, 28.50);
 
-// app.connect(host, port);
+app.connect(host, port);
 
 app.logicUpdate = function(dt) {
     app.viewer.scene.simulate(); // run physics
