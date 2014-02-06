@@ -45,8 +45,8 @@ THREE.Car = function() {
 	// car "feel" parameters
 
 	// DEFAULT VALUES
-	this.MAX_SPEED = 2200; // 2200
-	this.MAX_REVERSE_SPEED = -1500;
+	this.MAX_SPEED = 15; //25
+	this.MAX_REVERSE_SPEED = -15; //-15
 
 	this.MAX_WHEEL_ROTATION = 0.6;
 
@@ -54,15 +54,15 @@ THREE.Car = function() {
 	this.PEDAL_ACCELERATION = 20;
 	this.PEDAL_DECCELERATION = 10;
 
-	this.FRONT_ACCELERATION = 1250;
-	this.BACK_ACCELERATION = 1500;
+	this.FRONT_ACCELERATION = 5; //12
+	this.BACK_ACCELERATION = 15; //15
 
 	this.WHEEL_ANGULAR_ACCELERATION = 1.5;
 
-	this.FRONT_DECCELERATION = 750;
-	this.WHEEL_ANGULAR_DECCELERATION = 1.0;
+	this.FRONT_DECCELERATION = 10; //10
+	this.WHEEL_ANGULAR_DECCELERATION = 1; //1.0
 
-	this.STEERING_RADIUS_RATIO = 0.0023;
+	this.STEERING_RADIUS_RATIO = 0.23; //0.23
 
 	this.MAX_TILT_SIDES = 0.05;
 	this.MAX_TILT_FRONTBACK = 0.015;
@@ -79,7 +79,7 @@ THREE.Car = function() {
 
 	// this.root = new THREE.Object3D();
 
-	var friction = .8; // high friction
+	var friction = 0.8; // high friction
 	var restitution = .3; // low restitution
 
 	var carMaterial = Physijs.createMaterial(
@@ -91,9 +91,10 @@ THREE.Car = function() {
 		friction,
 		restitution);
 
+	var mass = 200;
 	this.root = new Physijs.BoxMesh(
 		new THREE.CubeGeometry(4, 2.5, 8),
-		carMaterial);
+		carMaterial, mass);
 
 	this.frontLeftWheelRoot = new THREE.Object3D();
 	this.frontRightWheelRoot = new THREE.Object3D();
@@ -393,17 +394,30 @@ THREE.Car = function() {
 		}
 
 		// car update
+
+		// direction
 		var forwardDelta = this.pedal * delta;
-
 		this.carOrientation += (forwardDelta * this.STEERING_RADIUS_RATIO) * this.wheelOrientation;
-
-		// add velocity
-
 		var linVelocity = new THREE.Vector3(Math.sin(this.carOrientation) * forwardDelta, 0, Math.cos(this.carOrientation) * forwardDelta);
+		var direction = linVelocity.clone();
+		direction.normalize();
 		linVelocity.add(this.root.getLinearVelocity());
 		this.root.setLinearVelocity(linVelocity);
+		var currentVelocity = this.root.getLinearVelocity();
+		currentVelocity.normalize();
+		var dotProduct = direction.dot(currentVelocity);
+		var newFriction = Math.abs(dotProduct);
+		newFriction = 1 - newFriction;
+		newFriction += 0.2;
+		if (this.root.world) {
+			// console.clear();
+			// console.log(newFriction);
+			this.root.world.execute('setFriction', {
+				id: this.root._physijs.id,
+				friction: newFriction
+			});
+		}
 
-		// console.clear();
 		// console.log(this.pedal);
 		// console.log(this.carOrientation);
 		// console.log(linVelocity);

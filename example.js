@@ -27,7 +27,7 @@ var ground_material = Physijs.createMaterial(
     new THREE.MeshLambertMaterial({
     map: THREE.ImageUtils.loadTexture('images/rocks.jpg')
 }),
-    .8, // high friction
+    0.8, // high friction
 .3 // low restitution
 );
 ground_material.map.wrapS = ground_material.map.wrapT = THREE.RepeatWrapping;
@@ -38,7 +38,7 @@ var ground = new Physijs.BoxMesh(
     ground_material,
     0 // mass
 );
-ground.position.set(0,-5,0);
+ground.position.set(0,-3,0);
 ground.receiveShadow = true;
 app.viewer.scene.add(ground);
 
@@ -48,18 +48,6 @@ app.viewer.scene.add(ground);
 app.car = new THREE.Car();
 app.car.modelScale = 0.8;
 app.car.backWheelOffset = 0.02;
-
-app.car.MAX_SPEED = 25; //25
-app.car.MAX_REVERSE_SPEED = -15; //-15
-app.car.FRONT_ACCELERATION = 25; //12
-app.car.BACK_ACCELERATION = 15; //15
-
-app.car.WHEEL_ANGULAR_ACCELERATION = 1.5; //1.5
-
-app.car.FRONT_DECCELERATION = 10; //10
-app.car.WHEEL_ANGULAR_DECCELERATION = 1; //1.0
-
-app.car.STEERING_RADIUS_RATIO = 0.23; //0.23
 
 app.car.callback = function(object) {
     addCar(object, 0, 0, 0, 1); //10

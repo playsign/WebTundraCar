@@ -645,6 +645,10 @@ public_functions.setLinearFactor = function ( details ) {
 	);
 };
 
+public_functions.setFriction = function ( details ) {
+	_objects[details.id].setFriction( details.friction );
+};
+
 public_functions.setDamping = function ( details ) {
 	_objects[details.id].setDamping( details.linear, details.angular );
 };
