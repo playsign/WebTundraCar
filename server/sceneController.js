@@ -37,20 +37,43 @@ var players = [];
 var cars = [];
 
 // OTHER
+var sceneController = scene.GetEntityByName("SceneController");
 
 
-function CreateCar() {
-	var car = scene.CreateEntity(scene.NextFreeId(), ["Name", "Mesh", "Placeable"]);
-	car.name = "car";
+function CreateCar(playerID) {
+	var car = scene.CreateEntity(scene.NextFreeId(), ["Name", "Mesh", "Placeable", "DynamicComponent"]);
+	// Name
+	car.name = "Car";
 
+	// Mesh
 	var meshRef = car.mesh.meshRef;
 	meshRef.ref = "cube.mesh";
 	car.mesh.meshRef = meshRef;
 
+	// Placeable
 	car.placeable.SetScale(new float3(4, 2.5, 8));
 	car.placeable.SetPosition(new float3(0, 0, 0));
 
-	cars.push(car);
+	// Dynamic Component
+	var attrs = car.dynamiccomponent;
+	attrs.name = "Car";
+	attrs.CreateAttribute("string", "playerID");
+	attrs.SetAttribute("playerID", playerID);
+
+	// List of cars
+	cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
+
+	// Set the car list to scene controller's dynamic component
+	var attrs = sceneController.dynamiccomponent;
+	var carList = attrs.GetAttribute("cars");
+
+	for (var i = 0; i < cars.length; i++) {
+		carList.push(cars[i].id);
+	}
+	attrs.SetAttribute("cars", carList);
+
+	// Notify clients that the car is created
+	sceneController.Exec(4, "carCreated", "carCreated", cars.length);
 }
 
 // Player connected
@@ -63,7 +86,7 @@ function ServerHandleUserConnected(userID, userConnection) { //(11d)
 
 	playerAmount++;
 
-	CreateCar();
+	CreateCar(userConnection.Property("name"));
 }
 
 // Player disconnected

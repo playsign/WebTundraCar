@@ -1,6 +1,6 @@
 <!DOCTYPE Scene>
 <scene>
- <entity id="2" sync="true">
+ <entity id="1" sync="true">
   <component typeId="26" type="Name" sync="true">
    <attribute value="SceneController" type="string" id="name" name="Name"/>
    <attribute value="" type="string" id="description" name="Description"/>
@@ -12,6 +12,9 @@
    <attribute value="0" type="int" id="runMode" name="Run mode"/>
    <attribute value="" type="string" id="applicationName" name="Script application name"/>
    <attribute value="" type="string" id="className" name="Script class name"/>
+  </component>
+  <component typeId="25" type="DynamicComponent" sync="true">
+   <attribute value="" type="QVariantList" id="cars" name="cars"/>
   </component>
  </entity>
 </scene>
