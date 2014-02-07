@@ -34,7 +34,6 @@ cam.placeable.transform = camPos;
 var playerAmount = 0;
 var spectatorAmount = 0;
 var players = [];
-var cars = [];
 
 // OTHER
 var sceneController = scene.GetEntityByName("SceneController");
@@ -61,7 +60,7 @@ function CreateCar(playerID) {
 	attrs.SetAttribute("playerID", playerID);
 
 	// List of cars
-	cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
+	var cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
 
 	// Set the car list to scene controller's dynamic component
 	var attrs = sceneController.dynamiccomponent;
@@ -105,6 +104,28 @@ function ServerHandleUserDisconnected(userID, userConnection) {
 	for (var i = 0; i < players.length; i++) {
 		if (players[i] === userConnection.Property("name")) {
 			players.splice(i, 1);
+		}
+	}
+
+	// Remove the car
+
+	// Get the car list
+	var attrs = sceneController.dynamiccomponent;
+	var carList = attrs.GetAttribute("cars");
+
+	for (var i = 0; i < carList.length; i++) {
+		var car = scene.EntityById(carList[i]);
+
+		if (car.dynamiccomponent.GetAttribute("playerID") == userConnection.Property("name")) {
+			console.LogInfo("Remove car");
+			console.LogInfo(carList[i]);
+			scene.RemoveEntity(carList[i]);
+
+			// Update the list of cars
+			var cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
+			attrs.SetAttribute("cars", cars);
+
+			break;
 		}
 	}
 }

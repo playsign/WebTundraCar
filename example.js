@@ -115,21 +115,21 @@ function init() {
             };
             document.addEventListener('keydown', function(ev) {
                 switch (ev.keyCode) {
-                    case 37: // left
-                        app.input.direction = 1;
-                        break;
+                    // case 37: // left
+                    //     app.input.direction = 1;
+                    //     break;
 
-                    case 38: // forward
-                        app.input.power = true;
-                        break;
+                    // case 38: // forward
+                    //     app.input.power = true;
+                    //     break;
 
-                    case 39: // right
-                        app.input.direction = -1;
-                        break;
+                    // case 39: // right
+                    //     app.input.direction = -1;
+                    //     break;
 
-                    case 40: // back
-                        app.input.power = false;
-                        break;
+                    // case 40: // back
+                    //     app.input.power = false;
+                    //     break;
 
                     case 65: // left
                         app.input.direction = 1;
@@ -150,21 +150,21 @@ function init() {
             });
             document.addEventListener('keyup', function(ev) {
                 switch (ev.keyCode) {
-                    case 37: // left
-                        app.input.direction = null;
-                        break;
+                    // case 37: // left
+                    //     app.input.direction = null;
+                    //     break;
 
-                    case 38: // forward
-                        app.input.power = null;
-                        break;
+                    // case 38: // forward
+                    //     app.input.power = null;
+                    //     break;
 
-                    case 39: // right
-                        app.input.direction = null;
-                        break;
+                    // case 39: // right
+                    //     app.input.direction = null;
+                    //     break;
 
-                    case 40: // back
-                        app.input.power = null;
-                        break;
+                    // case 40: // back
+                    //     app.input.power = null;
+                    //     break;
 
                     case 65: // left
                         app.input.direction = null;
@@ -282,6 +282,10 @@ CarApp.prototype.logicUpdate = function(dt) {
         newTransform.rot.x = Math.degrees(this.vehicle.mesh.rotation.x);
         newTransform.rot.y = Math.degrees(this.vehicle.mesh.rotation.y);
         newTransform.rot.z = Math.degrees(this.vehicle.mesh.rotation.z);
+
+        // console.clear();
+        // console.log(this.vehicle.mesh.rotation);
+        // console.log(newTransform.rot);
 
         this.reservedCar.placeable.transform = newTransform;
 
