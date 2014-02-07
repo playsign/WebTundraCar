@@ -27,10 +27,17 @@ function init() {
         "name": Date.now().toString() + getRandomInt(0, 2000000).toString()
     };
 
-    // PHYSI.JS
+    // PHYSI.JS     
 
     Physijs.scripts.worker = 'physijs_worker.js';
     Physijs.scripts.ammo = 'ammo.js';
+
+    // Stats
+    app.physics_stats = new Stats();
+    app.physics_stats.domElement.style.position = 'absolute';
+    app.physics_stats.domElement.style.bottom = '50px';
+    app.physics_stats.domElement.style.zIndex = 100;
+    app.viewer.container.appendChild(app.physics_stats.domElement);
 
     // Ground
     var ground_material = Physijs.createMaterial(
@@ -52,18 +59,132 @@ function init() {
     ground.receiveShadow = true;
     app.viewer.scene.add(ground);
 
+    // Car
 
-    // CAR
+    // app.car = new THREE.Car();
+    // app.car.modelScale = 0.8;
+    // app.car.backWheelOffset = 0.02;
+    // app.car.callback = function(object) {
+    //     addCar(object, 0, 0, 0, 1); //10
+    // };
+    // app.car.loadPartsJSON("GreenCar.js", "GreenCar.js");
 
-    app.car = new THREE.Car();
-    app.car.modelScale = 0.8;
-    app.car.backWheelOffset = 0.02;
+    // app.vehicle_body = undefined;
+    app.vehicle = undefined;
+    app.input = undefined;
 
-    app.car.callback = function(object) {
-        addCar(object, 0, 0, 0, 1); //10
-    };
+    var loader = new THREE.JSONLoader();
 
-    app.car.loadPartsJSON("GreenCar.js", "GreenCar.js");
+    loader.load("models/mustang.js", function(car, car_materials) {
+        loader.load("models/mustang_wheel.js", function(wheel, wheel_materials) {
+            var mesh = new Physijs.BoxMesh(
+                car,
+                new THREE.MeshFaceMaterial(car_materials));
+            mesh.position.y = 2;
+            mesh.castShadow = mesh.receiveShadow = true;
+
+            app.vehicle = new Physijs.Vehicle(mesh, new Physijs.VehicleTuning(
+                10.88,
+                1.83,
+                0.28,
+                500,
+                10.5,
+                6000));
+            app.viewer.scene.add(app.vehicle);
+
+            var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
+
+            for (var i = 0; i < 4; i++) {
+                app.vehicle.addWheel(
+                    wheel,
+                    wheel_material,
+                    new THREE.Vector3(
+                    i % 2 === 0 ? -1.6 : 1.6, -1,
+                    i < 2 ? 3.3 : -3.2),
+                    new THREE.Vector3(0, -1, 0),
+                    new THREE.Vector3(-1, 0, 0),
+                    0.5,
+                    0.7,
+                    i < 2 ? false : true);
+            }
+
+            app.input = {
+                power: null,
+                direction: null,
+                steering: 0
+            };
+            document.addEventListener('keydown', function(ev) {
+                switch (ev.keyCode) {
+                    case 37: // left
+                        app.input.direction = 1;
+                        break;
+
+                    case 38: // forward
+                        app.input.power = true;
+                        break;
+
+                    case 39: // right
+                        app.input.direction = -1;
+                        break;
+
+                    case 40: // back
+                        app.input.power = false;
+                        break;
+
+                    case 65: // left
+                        app.input.direction = 1;
+                        break;
+
+                    case 87: // forward
+                        app.input.power = true;
+                        break;
+
+                    case 68: // right
+                        app.input.direction = -1;
+                        break;
+
+                    case 83: // back
+                        app.input.power = false;
+                        break;
+                }
+            });
+            document.addEventListener('keyup', function(ev) {
+                switch (ev.keyCode) {
+                    case 37: // left
+                        app.input.direction = null;
+                        break;
+
+                    case 38: // forward
+                        app.input.power = null;
+                        break;
+
+                    case 39: // right
+                        app.input.direction = null;
+                        break;
+
+                    case 40: // back
+                        app.input.power = null;
+                        break;
+
+                    case 65: // left
+                        app.input.direction = null;
+                        break;
+
+                    case 87: // forward
+                        app.input.power = null;
+                        break;
+
+                    case 68: // right
+                        app.input.direction = null;
+                        break;
+
+                    case 83: // back
+                        app.input.power = null;
+                        break;
+                }
+            });
+        });
+    });
 
     // CAMERA
     app.viewer.camera.position.set(0, 100, 87);
@@ -77,50 +198,25 @@ function init() {
 
     app.connect(host, port);
 
-    function addCar(object, x, y, z, s) {
-        console.log("Add car");
+    // function addCar(object, x, y, z, s) {
+    //     console.log("Add car");
 
-        object.root.position.set(x, y, z);
-        app.viewer.scene.add(object.root);
+    //     // object.root.position.set(x, y, z);
+    //     // app.viewer.scene.add(object.root);
 
-        // object.root.castShadow = true;
-        // object.root.receiveShadow = true;
-    }
-
-    // function checkSceneCondition(condition) {
-    //     var range = condition.entityRangePresent;
-    //     var i, o3d;
-    //     if (range) {
-    //         for (i = range.min; i < range.max; i++) {
-    //             check(app.dataConnection.scene.entityById(i) !== null);
-    //             o3d = app.viewer.o3dByEntityId[i];
-    //             check(o3d !== null);
-    //             check(o3d.userData.entityId == i);
-    //         }
-    //     }
-
-    //     range = condition.entityRangeHaveMesh;
-    //     if (range) {
-    //         for (i = range.min; i < range.max; i++) {
-    //             o3d = app.viewer.o3dByEntityId[i];
-    //             check(o3d.children.length > 0);
-    //         }
-    //     }
+    //     // object.root.castShadow = true;
+    //     // object.root.receiveShadow = true;
     // }
 
-    // function checkPhysics2() {
-    //     var condition = {
-    //         entityRangePresent: {
-    //             min: 1,
-    //             max: 563
-    //         },
-    //         entityRangeHaveMesh: {
-    //             min: 1,
-    //             max: 563
-    //         },
-    //     };
-    //     checkSceneCondition();
-    // }
+    // Converts from degrees to radians.
+    Math.radians = function(degrees) {
+        return degrees * Math.PI / 180;
+    };
+
+    // Converts from radians to degrees.
+    Math.degrees = function(radians) {
+        return radians * 180 / Math.PI;
+    };
 }
 
 function CarApp() {
@@ -149,14 +245,44 @@ CarApp.prototype.logicInit = function() {
 };
 
 CarApp.prototype.logicUpdate = function(dt) {
-    app.viewer.scene.simulate(); // run physics
+    if (this.input && this.vehicle) {
+        if (this.input.direction !== null) {
+            this.input.steering += this.input.direction / 50;
+            if (this.input.steering < -.6) this.input.steering = -.6;
+            if (this.input.steering > .6) this.input.steering = .6;
+        }
+        this.vehicle.setSteering(this.input.steering, 0);
+        this.vehicle.setSteering(this.input.steering, 1);
 
-    if (this.connected && this.reservedCar !== undefined) {
+        if (this.input.power === true) {
+            this.vehicle.applyEngineForce(300);
+        } else if (this.input.power === false) {
+            this.vehicle.setBrake(20, 2);
+            this.vehicle.setBrake(20, 3);
+        } else {
+            this.vehicle.applyEngineForce(0);
+        }
+    }
+
+    this.viewer.scene.simulate(); // run physics
+
+    if (this.physics_stats) {
+        this.physics_stats.update();
+    }
+
+    if (this.connected && this.reservedCar !== undefined && this.vehicle !== undefined) {
         // Set a new position for the entity
         var newTransform = this.reservedCar.placeable.transform;
-        newTransform.pos.x = this.car.root.position.x;
-        newTransform.pos.y = this.car.root.position.y;
-        newTransform.pos.z = this.car.root.position.z;
+
+        // Position
+        newTransform.pos.x = this.vehicle.mesh.position.x;
+        newTransform.pos.y = this.vehicle.mesh.position.y;
+        newTransform.pos.z = this.vehicle.mesh.position.z;
+        // Rotation
+        newTransform.rot.x = Math.degrees(this.vehicle.mesh.rotation.x);
+        newTransform.rot.y = Math.degrees(this.vehicle.mesh.rotation.y);
+        newTransform.rot.z = Math.degrees(this.vehicle.mesh.rotation.z);
+
         this.reservedCar.placeable.transform = newTransform;
 
         // Inform the server about the change

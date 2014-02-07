@@ -85,16 +85,21 @@ THREE.Car = function() {
 	var carMaterial = Physijs.createMaterial(
 		new THREE.MeshBasicMaterial({
 		color: 0x888888,
-		transparent: true,
-		opacity: 0.0
+		transparent: false,
+		opacity: 1.0
 	}),
 		friction,
 		restitution);
 
 	var mass = 200;
-	this.root = new Physijs.BoxMesh(
-		new THREE.CubeGeometry(4, 2.5, 8),
-		carMaterial, mass);
+	this.root = new Physijs.CylinderMesh(
+		new THREE.CylinderGeometry( 2, 2, 1, 32 ),
+		carMaterial,
+		mass);
+
+	// this.root = new Physijs.BoxMesh(
+	// 	new THREE.CubeGeometry(4, 2.5, 8),
+	// 	carMaterial, mass);
 
 	this.frontLeftWheelRoot = new THREE.Object3D();
 	this.frontRightWheelRoot = new THREE.Object3D();
