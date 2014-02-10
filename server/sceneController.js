@@ -50,7 +50,7 @@ function CreateCar(playerID) {
 	car.mesh.meshRef = meshRef;
 
 	// Placeable
-	car.placeable.SetScale(new float3(4, 2.5, 8));
+	car.placeable.SetScale(new float3(2, 1, 2));
 	car.placeable.SetPosition(new float3(0, 0, 0));
 
 	// Dynamic Component
@@ -64,7 +64,7 @@ function CreateCar(playerID) {
 
 	// Set the car list to scene controller's dynamic component
 	var attrs = sceneController.dynamiccomponent;
-	var carList = attrs.GetAttribute("cars");
+	var carList = [];
 
 	for (var i = 0; i < cars.length; i++) {
 		carList.push(cars[i].id);
@@ -121,9 +121,15 @@ function ServerHandleUserDisconnected(userID, userConnection) {
 			console.LogInfo(carList[i]);
 			scene.RemoveEntity(carList[i]);
 
-			// Update the list of cars
-			var cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
-			attrs.SetAttribute("cars", cars);
+			// // Update the list of cars
+			// var cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
+			
+			// var carList = [];
+
+			// for (var i = 0; i < cars.length; i++) {
+			// 	carList.push(cars[i].id);
+			// }
+			// attrs.SetAttribute("cars", carList);
 
 			break;
 		}

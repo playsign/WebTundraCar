@@ -8,6 +8,7 @@
  */
 
 var app;
+// var carSize; // TODO debug remove
 
 function init() {
     app = new CarApp();
@@ -59,6 +60,15 @@ function init() {
     ground.receiveShadow = true;
     app.viewer.scene.add(ground);
 
+    // carSize = new Physijs.BoxMesh(
+    //     new THREE.CubeGeometry(4.57, 1.5, 1.68),
+    //     ground_material,
+    //     0 // mass
+    // );
+    // carSize.position.set(5, 0, 0);
+    // carSize.receiveShadow = true;
+    // app.viewer.scene.add(carSize);
+
     // Car
 
     // app.car = new THREE.Car();
@@ -77,9 +87,11 @@ function init() {
 
     loader.load("models/mustang.js", function(car, car_materials) {
         loader.load("models/mustang_wheel.js", function(wheel, wheel_materials) {
+            var mass = 1500;
             var mesh = new Physijs.BoxMesh(
                 car,
-                new THREE.MeshFaceMaterial(car_materials));
+                new THREE.MeshFaceMaterial(car_materials),
+                mass);
             mesh.position.y = 2;
             mesh.castShadow = mesh.receiveShadow = true;
 
@@ -90,6 +102,9 @@ function init() {
                 500,
                 10.5,
                 6000));
+            app.vehicle.engineForwardForce = 1200;
+            app.vehicle.engineBackwardForce = -1000;
+            app.vehicle.brakeAmount = 1000;
             app.viewer.scene.add(app.vehicle);
 
             var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
@@ -137,6 +152,7 @@ function init() {
 
                     case 87: // forward
                         app.input.power = true;
+                        app.vehicle.engineForceAmount = app.vehicle.engineForwardForce;
                         break;
 
                     case 68: // right
@@ -144,7 +160,9 @@ function init() {
                         break;
 
                     case 83: // back
-                        app.input.power = false;
+                        app.input.power = true;
+                        app.vehicle.engineForceAmount = app.vehicle.engineBackwardForce;
+                        // app.input.power = false;
                         break;
                 }
             });
@@ -179,7 +197,7 @@ function init() {
                         break;
 
                     case 83: // back
-                        app.input.power = null;
+                        // app.input.power = null;
                         break;
                 }
             });
@@ -255,10 +273,10 @@ CarApp.prototype.logicUpdate = function(dt) {
         this.vehicle.setSteering(this.input.steering, 1);
 
         if (this.input.power === true) {
-            this.vehicle.applyEngineForce(300);
+            this.vehicle.applyEngineForce(this.vehicle.engineForceAmount);
         } else if (this.input.power === false) {
-            this.vehicle.setBrake(20, 2);
-            this.vehicle.setBrake(20, 3);
+            this.vehicle.setBrake(this.vehicle.brakeAmount, 2);
+            this.vehicle.setBrake(this.vehicle.brakeAmount, 3);
         } else {
             this.vehicle.applyEngineForce(0);
         }
@@ -313,11 +331,11 @@ CarApp.prototype.getEntities = function() {
         var entityID = this.serverSceneCtrl.dynamicComponent.cars[i];
         var entity = this.dataConnection.scene.entityById(entityID);
         if (!entity) {
-            throw "entity not found";
-        }
-        if (entity.dynamicComponent.playerID == this.dataConnection.loginData.name) {
+            console.log("entity not found: " + entityID);
+        } else if (entity.dynamicComponent.playerID == this.dataConnection.loginData.name) {
             // Set entity reference
             this.reservedCar = entity;
+            console.log("reserved car id: " + entity.id);
 
             break;
         }
