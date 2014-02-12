@@ -462,53 +462,54 @@ CarApp.prototype.logicUpdate = function(dt) {
         // Apply new received car placeable positions (excluding our car) to corresponding placeable transforms
         if (this.serverSceneCtrl) {
             for (var i = 0; i < this.serverSceneCtrl.dynamicComponent.cars.length; i++) {
-                var entityID = this.serverSceneCtrl.dynamicComponent.cars[i];
-                var entity = this.dataConnection.scene.entityById(entityID);
-                if (!entity) {
-                    console.log("entity not found: " + entityID);
-                } else if (entity.dynamicComponent.name === "Car" && entity.dynamicComponent.playerID != this.dataConnection.loginData.name) {
-                    // Create boxmesh if it doesn't already exist
-                    if (entity.boxMesh === undefined) {
-                        entity.boxMesh = "loading";
-                        var loader = new THREE.JSONLoader();
+                var entID = this.serverSceneCtrl.dynamicComponent.cars[i];
+                var entity = this.dataConnection.scene.entityById(entID);
+                if (!entity || entity.dynamicComponent.name !== "Car" || entity.boxMesh === "loading" || entity.dynamicComponent.playerID == this.dataConnection.loginData.name) {
+                    continue;
+                }
+                var ent = entity;
 
-                        loader.load("models/mustang.js", function(car, car_materials) {
-                            loader.load("models/mustang_wheel.js", function(wheel, wheel_materials) {
-                                var mass = 1500;
-                                entity.boxMesh = new Physijs.BoxMesh(
-                                    car,
-                                    new THREE.MeshFaceMaterial(car_materials),
-                                    mass);
-                                entity.boxMesh.position.y = 2;
-                                entity.boxMesh.castShadow = entity.boxMesh.receiveShadow = true;
+                // Create boxmesh if it doesn't already exist
+                if (ent.boxMesh === undefined) {
+                    ent.boxMesh = "loading";
+                    var loader = new THREE.JSONLoader();
 
-                                app.viewer.scene.add(entity.boxMesh);
+                    loader.load("models/mustang.js", function(car, car_materials) {
+                        loader.load("models/mustang_wheel.js", function(wheel, wheel_materials) {
+                            var mass = 1500;
+                            ent.boxMesh = new Physijs.BoxMesh(
+                                car,
+                                new THREE.MeshFaceMaterial(car_materials),
+                                mass);
+                            ent.boxMesh.position.y = 2;
+                            ent.boxMesh.castShadow = ent.boxMesh.receiveShadow = true;
 
-                                // var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
+                            app.viewer.scene.add(ent.boxMesh);
 
-                                // for (var i = 0; i < 4; i++) {
-                                //     app.vehicle.addWheel(
-                                //         wheel,
-                                //         wheel_material,
-                                //         new THREE.Vector3(
-                                //         i % 2 === 0 ? -1.6 : 1.6, -1,
-                                //         i < 2 ? 3.3 : -3.2),
-                                //         new THREE.Vector3(0, -1, 0),
-                                //         new THREE.Vector3(-1, 0, 0),
-                                //         0.5,
-                                //         0.7,
-                                //         i < 2 ? false : true);
-                                // }
-                            });
+                            // var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
+
+                            // for (var i = 0; i < 4; i++) {
+                            //     app.vehicle.addWheel(
+                            //         wheel,
+                            //         wheel_material,
+                            //         new THREE.Vector3(
+                            //         i % 2 === 0 ? -1.6 : 1.6, -1,
+                            //         i < 2 ? 3.3 : -3.2),
+                            //         new THREE.Vector3(0, -1, 0),
+                            //         new THREE.Vector3(-1, 0, 0),
+                            //         0.5,
+                            //         0.7,
+                            //         i < 2 ? false : true);
+                            // }
                         });
-                    } else if (entity.boxMesh !== "loading") {
-                        entity.boxMesh.__dirtyPosition = true;
-                        entity.boxMesh.__dirtyRotation = true;
+                    });
+                } else {
+                    ent.boxMesh.__dirtyPosition = true;
+                    ent.boxMesh.__dirtyRotation = true;
 
-                        copyXyz(entity.placeable.transform.pos, entity.boxMesh.position);
-                        copyXyz(entity.placeable.transform.scale, entity.boxMesh.scale);
-                        tundraToThreeEuler(entity.placeable.transform.rot, entity.boxMesh.rotation, app.viewer.degToRad);
-                    }
+                    copyXyz(ent.placeable.transform.pos, ent.boxMesh.position);
+                    copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
+                    tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, app.viewer.degToRad);
                 }
             }
         }
