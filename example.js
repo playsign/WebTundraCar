@@ -382,7 +382,31 @@ function init() {
         // do we need to set up signal that does
         // mesh.applyMatrix(threeParent.matrixWorld) when placeable
         // changes?
-    }
+    };
+
+    app.viewer.onComponentRemovedInternal = function(entity, component) {
+        checkDefined(component, entity);
+
+        // Physijs quickfix
+        if (entity.boxMesh) {
+            // 'if' inside 'if' because we don't want to call threeGroup.parent.remove(threeGroup);
+            if (entity.boxMesh.parent) {
+                entity.boxMesh.parent.remove(entity.boxMesh);
+            }
+        } else if (component instanceof EC_Placeable) {
+            var threeGroup = this.o3dByEntityId[entity.id];
+            threeGroup.parent.remove(threeGroup);
+            delete this.o3dByEntityId[entity.id];
+        } else if (component instanceof EC_Mesh) {
+            //console.log("mesh added for o3d", threeGroup.userData.entityId);
+            // this.onMeshAddedOrChanged(threeGroup, component);
+        } else if (component instanceof EC_Camera) {
+            // this.onCameraAddedOrChanged(threeGroup, component);
+        } else if (component instanceof EC_Light) {
+            // this.onLightAddedOrChanged(threeGroup, component);
+        } else
+            console.log("view doesn't know about removed component " + component);
+    };
 }
 
 function CarApp() {

@@ -832,6 +832,9 @@ window.Physijs = (function() {
 
 			object.world = this;
 
+			// Quickfix
+			object.parent = this;
+
 			if ( object instanceof Physijs.Vehicle ) {
 
 				this.add( object.mesh );
