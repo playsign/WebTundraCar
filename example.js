@@ -58,6 +58,7 @@ function init() {
         0 // mass
     );
     ground.position.set(0, -3, 0);
+    ground.rotation.set(0,0,0.2);
     ground.receiveShadow = true;
     app.viewer.scene.add(ground);
 
@@ -472,6 +473,7 @@ CarApp.prototype.logicUpdate = function(dt) {
             newTransform.pos.y = this.vehicle.mesh.position.y;
             newTransform.pos.z = this.vehicle.mesh.position.z;
             // Rotation
+            this.vehicle.mesh.quaternion._euler._order = "ZYX";
             newTransform.rot.x = Math.degrees(this.vehicle.mesh.rotation.x);
             newTransform.rot.y = Math.degrees(this.vehicle.mesh.rotation.y);
             newTransform.rot.z = Math.degrees(this.vehicle.mesh.rotation.z);
