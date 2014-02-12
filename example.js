@@ -9,6 +9,7 @@
 
 var app;
 // var carSize; // TODO debug remove
+var ground_material;
 
 function init() {
     app = new CarApp();
@@ -41,7 +42,7 @@ function init() {
     app.viewer.container.appendChild(app.physics_stats.domElement);
 
     // Ground
-    var ground_material = Physijs.createMaterial(
+    ground_material = Physijs.createMaterial(
         new THREE.MeshLambertMaterial({
         map: THREE.ImageUtils.loadTexture('images/rocks.jpg')
     }),
@@ -61,11 +62,11 @@ function init() {
     app.viewer.scene.add(ground);
 
     // carSize = new Physijs.BoxMesh(
-    //     new THREE.CubeGeometry(4.57, 1.5, 1.68),
+    //     new THREE.CubeGeometry(1, 4, 1),
     //     ground_material,
     //     0 // mass
     // );
-    // carSize.position.set(5, 0, 0);
+    // carSize.position.set(0, 0, 0);
     // carSize.receiveShadow = true;
     // app.viewer.scene.add(carSize);
 
@@ -235,6 +236,116 @@ function init() {
     Math.degrees = function(radians) {
         return radians * 180 / Math.PI;
     };
+
+    app.viewer.connectToPlaceable = function(threeObject, placeable) {
+        if (placeable.debug)
+            console.log("connect o3d " + threeObject.id + " to placeable - pl x " + placeable.transform.pos.x + " o3d x " + threeObject.position.x + " o3d parent x " + threeObject.parent.position.x);
+
+        //NOTE: this depends on component handling being done here before the componentReady signal fires
+        var thisIsThis = this;
+        placeable.parentRefReady.add(function() {
+            var parent = thisIsThis.parentForPlaceable(placeable);
+            //NOTE: assumes first call -- add removing from prev parent to support live changes! XXX
+
+            // Physi.js comment to quickfix
+            // parent.add(threeObject);
+
+            if (placeable.debug)
+                console.log("parent ref set - o3d id=" + threeObject.id + " added to parent " + parent.id);
+            thisIsThis.updateFromTransform(threeObject, placeable);
+            placeable.attributeChanged.add(function(attr, changeType) {
+                thisIsThis.updateFromTransform(threeObject, placeable); //Todo: pass attr to know when parentRef changed
+            });
+        });
+    };
+
+    // Custom mesh loaded callback
+    app.viewer.onMeshLoaded = function(threeParent, meshComp, geometry, material) {
+        // console.log("onMeshLoaded, entityID: " + meshComp.parentEntity.id);
+        // if(meshComp.parentEntity.id === 39){
+        //     return;
+        // }
+
+        if (!useCubes && geometry === undefined) {
+            console.log("mesh load failed");
+            return;
+        }
+        var mesh;
+        if (useCubes) {
+            /*if (meshComp.meshRef.ref === "") {
+                console.log("useCubes ignoring empty meshRef");
+                return; //hackish fix to avoid removing the cube when the ref gets the data later
+            }*/
+            mesh = new THREE.Mesh(this.cubeGeometry, this.wireframeMaterial);
+        } else {
+            // checkDefined(geometry, material, meshComp, threeParent);
+            // PHYSIJS.MESH DOESNT SEEM TO HAVE PHYSICAL PROPERTIES
+            // mesh = new Physijs.Mesh(geometry, new THREE.MeshFaceMaterial(material));
+            // checkDefined(threeParent, meshComp, geometry, material);
+
+            mesh = new Physijs.BoxMesh(
+                new THREE.CubeGeometry(10.5, 3.7, 2),
+                ground_material,
+                1500 // mass
+            );
+            // mesh.position.set(0, 0, 5);
+            mesh.receiveShadow = true;
+
+            // var loader = new THREE.JSONLoader();
+
+            // loader.load("models/mustang.js", function(car, car_materials) {
+            //     loader.load("models/mustang_wheel.js", function(wheel, wheel_materials) {
+            //         var mass = 1500;
+            //         mesh = new Physijs.BoxMesh(
+            //             car,
+            //             new THREE.MeshFaceMaterial(car_materials),
+            //             mass);
+            //         mesh.position.y = 2;
+            //         mesh.castShadow = mesh.receiveShadow = true;
+
+            //         var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
+
+            //         for (var i = 0; i < 4; i++) {
+            //             app.vehicle.addWheel(
+            //                 wheel,
+            //                 wheel_material,
+            //                 new THREE.Vector3(
+            //                 i % 2 === 0 ? -1.6 : 1.6, -1,
+            //                 i < 2 ? 3.3 : -3.2),
+            //                 new THREE.Vector3(0, -1, 0),
+            //                 new THREE.Vector3(-1, 0, 0),
+            //                 0.5,
+            //                 0.7,
+            //                 i < 2 ? false : true);
+            //         }
+            //     });
+            // });
+        }
+        checkDefined(meshComp.parentEntity);
+        check(threeParent.userData.entityId === meshComp.parentEntity.id);
+        // console.log("Mesh loaded:", meshComp.meshRef.ref, "- adding to o3d of entity "+ threeParent.userData.entityId);
+        meshComp.threeMesh = mesh;
+        //mesh.applyMatrix(threeParent.matrixWorld);
+
+        threeParent.add(mesh);
+
+        // Physi.js uncomment to quickfix
+        var parent = this.parentForPlaceable(meshComp.parentEntity);
+        threeParent._physijs = mesh._physijs;
+        // threeParent.material._physijs = mesh.material._physijs;
+        parent.add(threeParent);
+
+        // app.viewer.scene.add(mesh);
+
+        this.meshReadySig.dispatch(meshComp, mesh);
+        mesh.needsUpdate = 1;
+        console.log("added mesh to o3d id=" + threeParent.id);
+        // threeParent.needsUpdate = 1;
+
+        // do we need to set up signal that does
+        // mesh.applyMatrix(threeParent.matrixWorld) when placeable
+        // changes?
+    }
 }
 
 function CarApp() {
@@ -288,24 +399,82 @@ CarApp.prototype.logicUpdate = function(dt) {
         this.physics_stats.update();
     }
 
-    if (this.connected && this.reservedCar !== undefined && this.vehicle !== undefined) {
-        // Set a new position for the entity
-        var newTransform = this.reservedCar.placeable.transform;
 
-        // Position
-        newTransform.pos.x = this.vehicle.mesh.position.x;
-        newTransform.pos.y = this.vehicle.mesh.position.y;
-        newTransform.pos.z = this.vehicle.mesh.position.z;
-        // Rotation
-        newTransform.rot.x = Math.degrees(this.vehicle.mesh.rotation.x);
-        newTransform.rot.y = Math.degrees(this.vehicle.mesh.rotation.y);
-        newTransform.rot.z = Math.degrees(this.vehicle.mesh.rotation.z);
+    if (this.connected) {
+        // Apply mustang boxmesh transform to corresponding placeable transform
+        if (this.reservedCar !== undefined && this.vehicle !== undefined) {
+            // Set a new position for the entity
+            var newTransform = this.reservedCar.placeable.transform;
 
-        // console.clear();
-        // console.log(this.vehicle.mesh.rotation);
-        // console.log(newTransform.rot);
+            // Position
+            newTransform.pos.x = this.vehicle.mesh.position.x;
+            newTransform.pos.y = this.vehicle.mesh.position.y;
+            newTransform.pos.z = this.vehicle.mesh.position.z;
+            // Rotation
+            newTransform.rot.x = Math.degrees(this.vehicle.mesh.rotation.x);
+            newTransform.rot.y = Math.degrees(this.vehicle.mesh.rotation.y);
+            newTransform.rot.z = Math.degrees(this.vehicle.mesh.rotation.z);
 
-        this.reservedCar.placeable.transform = newTransform;
+            // console.clear();
+            // console.log(this.vehicle.mesh.rotation);
+            // console.log(newTransform.rot);
+
+            this.reservedCar.placeable.transform = newTransform;
+        }
+
+        // Apply new received car placeable positions (excluding our car) to corresponding placeable transforms
+        if (this.serverSceneCtrl) {
+            for (var i = 0; i < this.serverSceneCtrl.dynamicComponent.cars.length; i++) {
+                var entityID = this.serverSceneCtrl.dynamicComponent.cars[i];
+                var entity = this.dataConnection.scene.entityById(entityID);
+                if (!entity) {
+                    console.log("entity not found: " + entityID);
+                } else if (entity.dynamicComponent.name === "Car" && entity.dynamicComponent.playerID != this.dataConnection.loginData.name) {
+                    // Create boxmesh if it doesn't already exist
+                    if (entity.boxMesh === undefined) {
+                        entity.boxMesh = "loading";
+                        var loader = new THREE.JSONLoader();
+
+                        loader.load("models/mustang.js", function(car, car_materials) {
+                            loader.load("models/mustang_wheel.js", function(wheel, wheel_materials) {
+                                var mass = 1500;
+                                entity.boxMesh = new Physijs.BoxMesh(
+                                    car,
+                                    new THREE.MeshFaceMaterial(car_materials),
+                                    mass);
+                                entity.boxMesh.position.y = 2;
+                                entity.boxMesh.castShadow = entity.boxMesh.receiveShadow = true;
+
+                                app.viewer.scene.add(entity.boxMesh);
+
+                                // var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
+
+                                // for (var i = 0; i < 4; i++) {
+                                //     app.vehicle.addWheel(
+                                //         wheel,
+                                //         wheel_material,
+                                //         new THREE.Vector3(
+                                //         i % 2 === 0 ? -1.6 : 1.6, -1,
+                                //         i < 2 ? 3.3 : -3.2),
+                                //         new THREE.Vector3(0, -1, 0),
+                                //         new THREE.Vector3(-1, 0, 0),
+                                //         0.5,
+                                //         0.7,
+                                //         i < 2 ? false : true);
+                                // }
+                            });
+                        });
+                    } else if(entity.boxMesh !== "loading") {
+                        entity.boxMesh.__dirtyPosition = true;
+                        entity.boxMesh.__dirtyRotation = true;
+
+                        copyXyz(entity.placeable.transform.pos, entity.boxMesh.position);
+                        copyXyz(entity.placeable.transform.scale, entity.boxMesh.scale);
+                        tundraToThreeEuler(entity.placeable.transform.rot, entity.boxMesh.rotation, app.viewer.degToRad);
+                    }
+                }
+            }
+        }
 
         // Inform the server about the change
         this.dataConnection.syncManager.sendChanges();
@@ -316,23 +485,22 @@ CarApp.prototype.logicUpdate = function(dt) {
 CarApp.prototype.onCarCreated = function(scope, entity, action, params) {
     console.log("onCarCreated");
 
-    this.getEntities();
+    this.findMyCar();
 };
 
-CarApp.prototype.getEntities = function() {
+CarApp.prototype.findMyCar = function() {
     console.log("getEntities");
 
     this.reservedCar = undefined;
 
     // Find a car that matches with the player
     this.serverSceneCtrl = this.dataConnection.scene.entityByName("SceneController");
-    var playerAmount = this.serverSceneCtrl.dynamicComponent.cars.length;
     for (var i = 0; i < this.serverSceneCtrl.dynamicComponent.cars.length; i++) {
         var entityID = this.serverSceneCtrl.dynamicComponent.cars[i];
         var entity = this.dataConnection.scene.entityById(entityID);
         if (!entity) {
             console.log("entity not found: " + entityID);
-        } else if (entity.dynamicComponent.playerID == this.dataConnection.loginData.name) {
+        } else if (entity.dynamicComponent.name === "Car" && entity.dynamicComponent.playerID == this.dataConnection.loginData.name) {
             // Set entity reference
             this.reservedCar = entity;
             console.log("reserved car id: " + entity.id);
@@ -341,9 +509,6 @@ CarApp.prototype.getEntities = function() {
         }
     }
 
-    if (this.reservedPlayerArea !== undefined) {
-        this.setCameraPosition(playerAmount);
-    }
 };
 
 init();

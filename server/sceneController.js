@@ -40,17 +40,17 @@ var sceneController = scene.GetEntityByName("SceneController");
 
 
 function CreateCar(playerID) {
-	var car = scene.CreateEntity(scene.NextFreeId(), ["Name", "Mesh", "Placeable", "DynamicComponent"]);
+	var car = scene.CreateEntity(scene.NextFreeId(), ["Name", "Placeable", "DynamicComponent"]);
 	// Name
 	car.name = "Car";
 
 	// Mesh
-	var meshRef = car.mesh.meshRef;
-	meshRef.ref = "cube.mesh";
-	car.mesh.meshRef = meshRef;
+	// var meshRef = car.mesh.meshRef;
+	// meshRef.ref = "cube.mesh";
+	// car.mesh.meshRef = meshRef;
 
 	// Placeable
-	car.placeable.SetScale(new float3(2, 1, 2));
+	// car.placeable.SetScale(new float3(3.7/2, 2/2, 10.5/2));
 	car.placeable.SetPosition(new float3(0, 0, 0));
 
 	// Dynamic Component

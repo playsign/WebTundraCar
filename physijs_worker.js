@@ -91,6 +91,11 @@ setShapeCache = function ( cache_key, shape ) {
 
 createShape = function( description ) {
 	var cache_key, shape;
+
+    // Quickfix
+    if(description.type == null){
+        description.type = 'box';
+    }
 	
 	_transform.setIdentity();
 	switch ( description.type ) {
@@ -643,10 +648,6 @@ public_functions.setLinearFactor = function ( details ) {
 	_objects[details.id].setLinearFactor(
 		_vec3_1
 	);
-};
-
-public_functions.setFriction = function ( details ) {
-	_objects[details.id].setFriction( details.friction );
 };
 
 public_functions.setDamping = function ( details ) {
