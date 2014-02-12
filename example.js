@@ -61,6 +61,43 @@ function init() {
     ground.receiveShadow = true;
     app.viewer.scene.add(ground);
 
+    // Walls
+    var wall = new Physijs.BoxMesh(
+        new THREE.CubeGeometry(1, 50, 200),
+        ground_material,
+        0 // mass
+    );
+    wall.position.set(-50, 0, 0);
+    wall.receiveShadow = true;
+    app.viewer.scene.add(wall);
+
+    var wall = new Physijs.BoxMesh(
+        new THREE.CubeGeometry(1, 50, 200),
+        ground_material,
+        0 // mass
+    );
+    wall.position.set(50, 0, 0);
+    wall.receiveShadow = true;
+    app.viewer.scene.add(wall);
+
+    var wall = new Physijs.BoxMesh(
+        new THREE.CubeGeometry(200, 50, 1),
+        ground_material,
+        0 // mass
+    );
+    wall.position.set(0, 0, -50);
+    wall.receiveShadow = true;
+    app.viewer.scene.add(wall);
+
+    var wall = new Physijs.BoxMesh(
+        new THREE.CubeGeometry(200, 10, 1),
+        ground_material,
+        0 // mass
+    );
+    wall.position.set(0, 0, 50);
+    wall.receiveShadow = true;
+    app.viewer.scene.add(wall);
+
     // carSize = new Physijs.BoxMesh(
     //     new THREE.CubeGeometry(1, 4, 1),
     //     ground_material,
@@ -464,7 +501,7 @@ CarApp.prototype.logicUpdate = function(dt) {
                                 // }
                             });
                         });
-                    } else if(entity.boxMesh !== "loading") {
+                    } else if (entity.boxMesh !== "loading") {
                         entity.boxMesh.__dirtyPosition = true;
                         entity.boxMesh.__dirtyRotation = true;
 
