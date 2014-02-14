@@ -58,7 +58,7 @@ function init() {
         0 // mass
     );
     ground.position.set(0, -3, 0);
-    ground.rotation.set(0,0,0.2);
+    // ground.rotation.set(0,0,0.2);
     ground.receiveShadow = true;
     app.viewer.scene.add(ground);
 
@@ -417,6 +417,29 @@ function CarApp() {
 CarApp.prototype = new Application();
 
 CarApp.prototype.constructor = CarApp;
+
+CarApp.prototype.init = function() {
+    this.keyboard = new THREEx.KeyboardState();
+    this.clock = new THREE.Clock();
+
+    // SCENE quickfix
+    this.scene = new Physijs.Scene();
+
+    // CAMERA
+    // moved to ThreeView
+
+    // VIEWER
+    this.viewer = new ThreeView(this.scene);
+    this.viewer.objectClicked.add(this.onObjectClicked.bind(this));
+
+    // MODEL
+    this.connected = false;
+    this.dataConnection = new WebTundraModel(this);
+    this.dataConnection.client.connected.add(this.onConnected.bind(this));
+    this.dataConnection.client.disconnected.add(this.onDisconnected.bind(this));
+    this.dataConnection.scene.componentAdded.add(this.viewer.onComponentAddedOrChanged.bind(this.viewer));
+    this.dataConnection.scene.componentRemoved.add(this.viewer.onComponentRemoved.bind(this.viewer));
+};
 
 CarApp.prototype.onConnected = function() {
     console.log("connected");
