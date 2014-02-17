@@ -10,6 +10,7 @@
 var app;
 // var carSize; // TODO debug remove
 var ground_material;
+var debugArray = [];
 
 function init() {
     app = new CarApp();
@@ -275,116 +276,6 @@ function init() {
         return radians * 180 / Math.PI;
     };
 
-    app.viewer.connectToPlaceable = function(threeObject, placeable) {
-        if (placeable.debug)
-            console.log("connect o3d " + threeObject.id + " to placeable - pl x " + placeable.transform.pos.x + " o3d x " + threeObject.position.x + " o3d parent x " + threeObject.parent.position.x);
-
-        //NOTE: this depends on component handling being done here before the componentReady signal fires
-        var thisIsThis = this;
-        placeable.parentRefReady.add(function() {
-            var parent = thisIsThis.parentForPlaceable(placeable);
-            //NOTE: assumes first call -- add removing from prev parent to support live changes! XXX
-
-            // Physi.js comment to quickfix
-            // parent.add(threeObject);
-
-            if (placeable.debug)
-                console.log("parent ref set - o3d id=" + threeObject.id + " added to parent " + parent.id);
-            thisIsThis.updateFromTransform(threeObject, placeable);
-            placeable.attributeChanged.add(function(attr, changeType) {
-                thisIsThis.updateFromTransform(threeObject, placeable); //Todo: pass attr to know when parentRef changed
-            });
-        });
-    };
-
-    // Custom mesh loaded callback
-    app.viewer.onMeshLoaded = function(threeParent, meshComp, geometry, material) {
-        // console.log("onMeshLoaded, entityID: " + meshComp.parentEntity.id);
-        // if(meshComp.parentEntity.id === 39){
-        //     return;
-        // }
-
-        if (!useCubes && geometry === undefined) {
-            console.log("mesh load failed");
-            return;
-        }
-        var mesh;
-        if (useCubes) {
-            /*if (meshComp.meshRef.ref === "") {
-                console.log("useCubes ignoring empty meshRef");
-                return; //hackish fix to avoid removing the cube when the ref gets the data later
-            }*/
-            mesh = new THREE.Mesh(this.cubeGeometry, this.wireframeMaterial);
-        } else {
-            // checkDefined(geometry, material, meshComp, threeParent);
-            // PHYSIJS.MESH DOESNT SEEM TO HAVE PHYSICAL PROPERTIES
-            // mesh = new Physijs.Mesh(geometry, new THREE.MeshFaceMaterial(material));
-            // checkDefined(threeParent, meshComp, geometry, material);
-
-            mesh = new Physijs.BoxMesh(
-                new THREE.CubeGeometry(10.5, 3.7, 2),
-                ground_material,
-                1500 // mass
-            );
-            // mesh.position.set(0, 0, 5);
-            mesh.receiveShadow = true;
-
-            // var loader = new THREE.JSONLoader();
-
-            // loader.load("models/mustang.js", function(car, car_materials) {
-            //     loader.load("models/mustang_wheel.js", function(wheel, wheel_materials) {
-            //         var mass = 1500;
-            //         mesh = new Physijs.BoxMesh(
-            //             car,
-            //             new THREE.MeshFaceMaterial(car_materials),
-            //             mass);
-            //         mesh.position.y = 2;
-            //         mesh.castShadow = mesh.receiveShadow = true;
-
-            //         var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
-
-            //         for (var i = 0; i < 4; i++) {
-            //             app.vehicle.addWheel(
-            //                 wheel,
-            //                 wheel_material,
-            //                 new THREE.Vector3(
-            //                 i % 2 === 0 ? -1.6 : 1.6, -1,
-            //                 i < 2 ? 3.3 : -3.2),
-            //                 new THREE.Vector3(0, -1, 0),
-            //                 new THREE.Vector3(-1, 0, 0),
-            //                 0.5,
-            //                 0.7,
-            //                 i < 2 ? false : true);
-            //         }
-            //     });
-            // });
-        }
-        checkDefined(meshComp.parentEntity);
-        check(threeParent.userData.entityId === meshComp.parentEntity.id);
-        // console.log("Mesh loaded:", meshComp.meshRef.ref, "- adding to o3d of entity "+ threeParent.userData.entityId);
-        meshComp.threeMesh = mesh;
-        //mesh.applyMatrix(threeParent.matrixWorld);
-
-        threeParent.add(mesh);
-
-        // Physi.js uncomment to quickfix
-        var parent = this.parentForPlaceable(meshComp.parentEntity);
-        threeParent._physijs = mesh._physijs;
-        // threeParent.material._physijs = mesh.material._physijs;
-        parent.add(threeParent);
-
-        // app.viewer.scene.add(mesh);
-
-        this.meshReadySig.dispatch(meshComp, mesh);
-        mesh.needsUpdate = 1;
-        console.log("added mesh to o3d id=" + threeParent.id);
-        // threeParent.needsUpdate = 1;
-
-        // do we need to set up signal that does
-        // mesh.applyMatrix(threeParent.matrixWorld) when placeable
-        // changes?
-    };
-
     app.viewer.onComponentRemovedInternal = function(entity, component) {
         checkDefined(component, entity);
 
@@ -520,20 +411,30 @@ CarApp.prototype.logicUpdate = function(dt) {
 
                 // Create boxmesh if it doesn't already exist
                 if (ent.boxMesh === undefined) {
-                    ent.boxMesh = "loading";
                     var loader = new THREE.JSONLoader();
+                    ent.boxMesh = "loading";
+                    console.log(ent);
+
+                    // var wheelCallback = function(){
+
+                    // }
 
                     loader.load("models/mustang.js", function(car, car_materials) {
+                       
                         loader.load("models/mustang_wheel.js", function(wheel, wheel_materials) {
+                             var newCar = this;
+                            console.log("loader.load");
+                            debugArray.push(newCar);
+
                             var mass = 1500;
-                            ent.boxMesh = new Physijs.BoxMesh(
+                            newCar.boxMesh = new Physijs.BoxMesh(
                                 car,
                                 new THREE.MeshFaceMaterial(car_materials),
                                 mass);
-                            ent.boxMesh.position.y = 2;
-                            ent.boxMesh.castShadow = ent.boxMesh.receiveShadow = true;
+                            newCar.boxMesh.position.y = 2;
+                            newCar.boxMesh.castShadow = newCar.boxMesh.receiveShadow = true;
 
-                            app.viewer.scene.add(ent.boxMesh);
+                            app.viewer.scene.add(newCar.boxMesh);
 
                             // var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
 
@@ -550,8 +451,8 @@ CarApp.prototype.logicUpdate = function(dt) {
                             //         0.7,
                             //         i < 2 ? false : true);
                             // }
-                        });
-                    });
+                        }.bind(this));
+                    }.bind(ent));
                 } else {
                     ent.boxMesh.__dirtyPosition = true;
                     ent.boxMesh.__dirtyRotation = true;

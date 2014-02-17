@@ -832,9 +832,6 @@ window.Physijs = (function() {
 
 			object.world = this;
 
-			// Quickfix
-			object.parent = this;
-
 			if ( object instanceof Physijs.Vehicle ) {
 
 				this.add( object.mesh );
@@ -851,17 +848,6 @@ window.Physijs = (function() {
 					object._physijs.children = [];
 					addObjectChildren( object, object );
 				}
-
-				// Quickfix (object.material check)
-                if ( object.material && object.material._physijs ) {
-                    if ( !this._materials_ref_counts.hasOwnProperty( object.material._physijs.id ) ) {
-                        this.execute( 'registerMaterial', object.material._physijs );
-                        object._physijs.materialId = object.material._physijs.id;
-                        this._materials_ref_counts[object.material._physijs.id] = 1;
-                    } else {
-                        this._materials_ref_counts[object.material._physijs.id]++;
-                    }
-                }
 
 				if ( object.material._physijs ) {
 					if ( !this._materials_ref_counts.hasOwnProperty( object.material._physijs.id ) ) {
