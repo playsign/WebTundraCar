@@ -91,11 +91,6 @@ setShapeCache = function ( cache_key, shape ) {
 
 createShape = function( description ) {
 	var cache_key, shape;
-
-    // Quickfix
-    if(description.type == null){
-        description.type = 'box';
-    }
 	
 	_transform.setIdentity();
 	switch ( description.type ) {
