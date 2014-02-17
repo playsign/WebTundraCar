@@ -111,15 +111,6 @@ function init() {
 
     // Car
 
-    // app.car = new THREE.Car();
-    // app.car.modelScale = 0.8;
-    // app.car.backWheelOffset = 0.02;
-    // app.car.callback = function(object) {
-    //     addCar(object, 0, 0, 0, 1); //10
-    // };
-    // app.car.loadPartsJSON("GreenCar.js", "GreenCar.js");
-
-    // app.vehicle_body = undefined;
     app.vehicle = undefined;
     app.input = undefined;
 
@@ -256,16 +247,6 @@ function init() {
 
     app.connect(host, port);
 
-    // function addCar(object, x, y, z, s) {
-    //     console.log("Add car");
-
-    //     // object.root.position.set(x, y, z);
-    //     // app.viewer.scene.add(object.root);
-
-    //     // object.root.castShadow = true;
-    //     // object.root.receiveShadow = true;
-    // }
-
     // Converts from degrees to radians.
     Math.radians = function(degrees) {
         return degrees * Math.PI / 180;
@@ -359,7 +340,6 @@ CarApp.prototype.logicUpdate = function(dt) {
     if (this.physics_stats) {
         this.physics_stats.update();
     }
-
 
     if (this.connected) {
         // Apply mustang boxmesh transform to corresponding placeable transform
