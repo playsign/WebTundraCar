@@ -276,29 +276,14 @@ function init() {
         return radians * 180 / Math.PI;
     };
 
-    app.viewer.onComponentRemovedInternal = function(entity, component) {
-        checkDefined(component, entity);
-
-        // Physijs quickfix
-        if (entity.boxMesh) {
+    app.viewer.componentRemovedSig.add(function(component) {
+        if (component.parentEntity.boxMesh) {
             // 'if' inside 'if' because we don't want to call threeGroup.parent.remove(threeGroup);
-            if (entity.boxMesh.parent) {
-                entity.boxMesh.parent.remove(entity.boxMesh);
+            if (component.parentEntity.boxMesh.parent) {
+                component.parentEntity.boxMesh.parent.remove(component.parentEntity.boxMesh);
             }
-        } else if (component instanceof EC_Placeable) {
-            var threeGroup = this.o3dByEntityId[entity.id];
-            threeGroup.parent.remove(threeGroup);
-            delete this.o3dByEntityId[entity.id];
-        } else if (component instanceof EC_Mesh) {
-            //console.log("mesh added for o3d", threeGroup.userData.entityId);
-            // this.onMeshAddedOrChanged(threeGroup, component);
-        } else if (component instanceof EC_Camera) {
-            // this.onCameraAddedOrChanged(threeGroup, component);
-        } else if (component instanceof EC_Light) {
-            // this.onLightAddedOrChanged(threeGroup, component);
-        } else
-            console.log("view doesn't know about removed component " + component);
-    };
+        }
+    });
 }
 
 function CarApp() {
@@ -420,9 +405,9 @@ CarApp.prototype.logicUpdate = function(dt) {
                     // }
 
                     loader.load("models/mustang.js", function(car, car_materials) {
-                       
+
                         loader.load("models/mustang_wheel.js", function(wheel, wheel_materials) {
-                             var newCar = this;
+                            var newCar = this;
                             console.log("loader.load");
                             debugArray.push(newCar);
 
