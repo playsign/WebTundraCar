@@ -10,7 +10,6 @@
 var app;
 // var carSize; // TODO debug remove
 var ground_material;
-var debugArray = [];
 
 function init() {
     app = new CarApp();
@@ -29,11 +28,6 @@ function init() {
     app.dataConnection.loginData = {
         "name": Date.now().toString() + getRandomInt(0, 2000000).toString()
     };
-
-    // PHYSI.JS     
-
-    Physijs.scripts.worker = 'physijs_worker.js';
-    Physijs.scripts.ammo = 'ammo.js';
 
     // Stats
     app.physics_stats = new Stats();
@@ -256,15 +250,6 @@ function init() {
     Math.degrees = function(radians) {
         return radians * 180 / Math.PI;
     };
-
-    app.viewer.componentRemovedSig.add(function(component) {
-        if (component.parentEntity.boxMesh) {
-            // 'if' inside 'if' because we don't want to call threeGroup.parent.remove(threeGroup);
-            if (component.parentEntity.boxMesh.parent) {
-                component.parentEntity.boxMesh.parent.remove(component.parentEntity.boxMesh);
-            }
-        }
-    });
 }
 
 function CarApp() {
@@ -275,27 +260,8 @@ CarApp.prototype = new Application();
 
 CarApp.prototype.constructor = CarApp;
 
-CarApp.prototype.init = function() {
-    this.keyboard = new THREEx.KeyboardState();
-    this.clock = new THREE.Clock();
-
-    // SCENE quickfix
-    this.scene = new Physijs.Scene();
-
-    // CAMERA
-    // moved to ThreeView
-
-    // VIEWER
-    this.viewer = new ThreeView(this.scene);
-    this.viewer.objectClicked.add(this.onObjectClicked.bind(this));
-
-    // MODEL
-    this.connected = false;
-    this.dataConnection = new WebTundraModel(this);
-    this.dataConnection.client.connected.add(this.onConnected.bind(this));
-    this.dataConnection.client.disconnected.add(this.onDisconnected.bind(this));
-    this.dataConnection.scene.componentAdded.add(this.viewer.onComponentAddedOrChanged.bind(this.viewer));
-    this.dataConnection.scene.componentRemoved.add(this.viewer.onComponentRemoved.bind(this.viewer));
+CarApp.prototype.createViewer = function() {
+    return new PhysijsView();
 };
 
 CarApp.prototype.onConnected = function() {
@@ -389,7 +355,6 @@ CarApp.prototype.logicUpdate = function(dt) {
                         loader.load("models/mustang_wheel.js", function(wheel, wheel_materials) {
                             var newCar = this;
                             console.log("loader.load");
-                            debugArray.push(newCar);
 
                             var mass = 1500;
                             newCar.boxMesh = new Physijs.BoxMesh(
