@@ -29,14 +29,15 @@ function init() {
         "name": Date.now().toString() + getRandomInt(0, 2000000).toString()
     };
 
-    // Stats
+    // STATS
     app.physics_stats = new Stats();
     app.physics_stats.domElement.style.position = 'absolute';
     app.physics_stats.domElement.style.bottom = '50px';
     app.physics_stats.domElement.style.zIndex = 100;
     app.viewer.container.appendChild(app.physics_stats.domElement);
 
-    // Ground
+    // GROUND
+
     ground_material = Physijs.createMaterial(
         new THREE.MeshLambertMaterial({
         map: THREE.ImageUtils.loadTexture('images/rocks.jpg')
@@ -57,7 +58,8 @@ function init() {
     ground.receiveShadow = true;
     app.viewer.scene.add(ground);
 
-    // Walls
+    // WALLS
+
     var wall = new Physijs.BoxMesh(
         new THREE.CubeGeometry(1, 50, 200),
         ground_material,
@@ -129,7 +131,9 @@ function init() {
                 6000));
             app.vehicle.engineForwardForce = 1200;
             app.vehicle.engineBackwardForce = -1000;
-            app.vehicle.brakeAmount = 1000;
+            app.vehicle.brakeAmount = 250;
+            app.vehicle.steeringDeceleration = 0.5;
+            app.vehicle.steeringMax = 0.6;
             app.viewer.scene.add(app.vehicle);
 
             var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
@@ -153,79 +157,81 @@ function init() {
                 direction: null,
                 steering: 0
             };
-            document.addEventListener('keydown', function(ev) {
-                switch (ev.keyCode) {
-                    // case 37: // left
-                    //     app.input.direction = 1;
-                    //     break;
 
-                    // case 38: // forward
-                    //     app.input.power = true;
-                    //     break;
 
-                    // case 39: // right
-                    //     app.input.direction = -1;
-                    //     break;
+            // document.addEventListener('keydown', function(ev) {
+            //     switch (ev.keyCode) {
+            //         // case 37: // left
+            //         //     app.input.direction = 1;
+            //         //     break;
 
-                    // case 40: // back
-                    //     app.input.power = false;
-                    //     break;
+            //         // case 38: // forward
+            //         //     app.input.power = true;
+            //         //     break;
 
-                    case 65: // left
-                        app.input.direction = 1;
-                        break;
+            //         // case 39: // right
+            //         //     app.input.direction = -1;
+            //         //     break;
 
-                    case 87: // forward
-                        app.input.power = true;
-                        app.vehicle.engineForceAmount = app.vehicle.engineForwardForce;
-                        break;
+            //         // case 40: // back
+            //         //     app.input.power = false;
+            //         //     break;
 
-                    case 68: // right
-                        app.input.direction = -1;
-                        break;
+            //         case 65: // left
+            //             app.input.direction = 1;
+            //             break;
 
-                    case 83: // back
-                        app.input.power = true;
-                        app.vehicle.engineForceAmount = app.vehicle.engineBackwardForce;
-                        // app.input.power = false;
-                        break;
-                }
-            });
-            document.addEventListener('keyup', function(ev) {
-                switch (ev.keyCode) {
-                    // case 37: // left
-                    //     app.input.direction = null;
-                    //     break;
+            //         case 87: // forward
+            //             app.input.power = true;
+            //             app.vehicle.engineForceAmount = app.vehicle.engineForwardForce;
+            //             break;
 
-                    // case 38: // forward
-                    //     app.input.power = null;
-                    //     break;
+            //         case 68: // right
+            //             app.input.direction = -1;
+            //             break;
 
-                    // case 39: // right
-                    //     app.input.direction = null;
-                    //     break;
+            //         case 83: // back
+            //             app.input.power = true;
+            //             app.vehicle.engineForceAmount = app.vehicle.engineBackwardForce;
+            //             // app.input.power = false;
+            //             break;
+            //     }
+            // });
+            // document.addEventListener('keyup', function(ev) {
+            //     switch (ev.keyCode) {
+            //         // case 37: // left
+            //         //     app.input.direction = null;
+            //         //     break;
 
-                    // case 40: // back
-                    //     app.input.power = null;
-                    //     break;
+            //         // case 38: // forward
+            //         //     app.input.power = null;
+            //         //     break;
 
-                    case 65: // left
-                        app.input.direction = null;
-                        break;
+            //         // case 39: // right
+            //         //     app.input.direction = null;
+            //         //     break;
 
-                    case 87: // forward
-                        app.input.power = null;
-                        break;
+            //         // case 40: // back
+            //         //     app.input.power = null;
+            //         //     break;
 
-                    case 68: // right
-                        app.input.direction = null;
-                        break;
+            //         case 65: // left
+            //             app.input.direction = null;
+            //             break;
 
-                    case 83: // back
-                        // app.input.power = null;
-                        break;
-                }
-            });
+            //         case 87: // forward
+            //             app.input.power = null;
+            //             break;
+
+            //         case 68: // right
+            //             app.input.direction = null;
+            //             break;
+
+            //         case 83: // back
+            //             // app.input.power = null;
+            //             break;
+            //     }
+            // });
         });
     });
 
@@ -241,14 +247,17 @@ function init() {
 
     app.connect(host, port);
 
-    // Converts from degrees to radians.
-    Math.radians = function(degrees) {
-        return degrees * Math.PI / 180;
-    };
+    // // Converts from degrees to radians.
+    // Math.radians = function(degrees) {
+    //     return degrees * Math.PI / 180;
+    // };
 
     // Converts from radians to degrees.
     Math.degrees = function(radians) {
         return radians * 180 / Math.PI;
+    };
+    Math.clamp = function(x, a, b) {
+        return x < a ? a : (x > b ? b : x);
     };
 }
 
@@ -272,40 +281,83 @@ CarApp.prototype.onConnected = function() {
     this.dataConnection.scene.actionTriggered.add(this.onCarCreated.bind(this));
 };
 
-CarApp.prototype.onDisconnected = function() {
-    console.log("disconnected");
-    this.connected = false;
-};
+// CarApp.prototype.onDisconnected = function() {
+//     console.log("disconnected");
+//     this.connected = false;
+// };
 
-CarApp.prototype.logicInit = function() {
+// CarApp.prototype.logicInit = function() {
 
-};
+// };
 
 CarApp.prototype.logicUpdate = function(dt) {
-    if (this.input && this.vehicle) {
-        if (this.input.direction !== null) {
-            this.input.steering += this.input.direction / 50;
-            if (this.input.steering < -.6) this.input.steering = -.6;
-            if (this.input.steering > .6) this.input.steering = .6;
-        }
-        this.vehicle.setSteering(this.input.steering, 0);
-        this.vehicle.setSteering(this.input.steering, 1);
 
-        if (this.input.power === true) {
-            this.vehicle.applyEngineForce(this.vehicle.engineForceAmount);
-        } else if (this.input.power === false) {
+    // INPUT
+    if (this.input) {
+        // Steering
+        if (this.keyboard.pressed("left") || this.keyboard.pressed("a")) {
+            this.input.direction = 1;
+        } else if (this.keyboard.pressed("right") || this.keyboard.pressed("d")) {
+            this.input.direction = -1;
+        } else {
+            this.input.direction = 0;
+        }
+
+        // Acceleration
+        if (this.keyboard.pressed("up") || this.keyboard.pressed("w")) {
+            this.input.power = true;
+            this.vehicle.engineForceAmount = this.vehicle.engineForwardForce;
+        } else if (this.keyboard.pressed("down") || this.keyboard.pressed("s")) {
+            this.input.power = true;
+            this.vehicle.engineForceAmount = this.vehicle.engineBackwardForce;
+        } else {
+            this.input.power = false;
+        }
+
+        // Brake
+        if (this.keyboard.pressed("space")) {
             this.vehicle.setBrake(this.vehicle.brakeAmount, 2);
             this.vehicle.setBrake(this.vehicle.brakeAmount, 3);
         } else {
-            this.vehicle.applyEngineForce(0);
+            this.vehicle.setBrake(0, 2);
+            this.vehicle.setBrake(0, 3);
+        }
+
+        // Update engine and steering
+        if (this.input && this.vehicle) {
+            if (this.input.direction !== 0) {
+                this.input.steering += this.input.direction / 50;
+                if (this.input.steering < -this.vehicle.steeringMax) this.input.steering = -this.vehicle.steeringMax;
+                if (this.input.steering > this.vehicle.steeringMax) this.input.steering = this.vehicle.steeringMax;
+            } else {
+                // Decay steering
+                if (this.input.steering > 0) {
+                    this.input.steering = Math.clamp(this.input.steering - dt * this.vehicle.steeringDeceleration, 0, this.vehicle.steeringMax);
+                } else {
+                   this.input.steering = Math.clamp(this.input.steering + dt * this.vehicle.steeringDeceleration, -this.vehicle.steeringMax, 0);
+                }
+            }
+            this.vehicle.setSteering(this.input.steering, 0);
+            this.vehicle.setSteering(this.input.steering, 1);
+
+            if (this.input.power === true) {
+                this.vehicle.applyEngineForce(this.vehicle.engineForceAmount);
+            } else if (this.input.power === false) {
+                this.vehicle.applyEngineForce(0);
+            }
         }
     }
+
+    // PHYSICS
 
     this.viewer.scene.simulate(); // run physics
 
     if (this.physics_stats) {
         this.physics_stats.update();
     }
+
+
+    // WEBTUNDRA
 
     if (this.connected) {
         // Apply mustang boxmesh transform to corresponding placeable transform
