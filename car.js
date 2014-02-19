@@ -7,8 +7,12 @@
  *      Date: 2014
  */
 
-function Car(application) {
-    this.app = application;
+function Car(webTundraApp) {
+    if(webTundraApp instanceof Application === false){
+        throw("Instance of WebTundra application is required");
+    }
+
+    this.app = webTundraApp;
     // TODO this.hotkeys{}
     this.serverSceneCtrl = undefined;
     this.reservedCar = undefined;
