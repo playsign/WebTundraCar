@@ -66,8 +66,6 @@ function Car(application) {
         }.bind(this));
     }.bind(this));
 
-    this.app.connectedSig.add(this.connectionEstablished.bind(this));
-
     // Converts from radians to degrees.
     Math.degrees = function(radians) {
         return radians * 180 / Math.PI;
@@ -80,6 +78,7 @@ function Car(application) {
         return x < a ? a : (x > b ? b : x);
     };
 
+    this.app.dataConnection.client.connected.add(this.connectionEstablished.bind(this));
 
     requestAnimationFrame(this.update.bind(this));
 }
