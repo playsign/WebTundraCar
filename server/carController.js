@@ -1,6 +1,6 @@
 // For conditions of distribution and use, see copyright notice in LICENSE
 /*
- *	SceneController
+ *	CarController
  *	@author Tapani Jamsa
  *	Date: 2014
  */
@@ -18,26 +18,13 @@ if (server.IsRunning()) {
 	}
 }
 
-// CAMERA
-var cam = scene.GetEntityByName("FreeLookCamera");
-cam.farPlane = 50000;
-var camPosModifier = 110;
-var minCameraPosY = 300;
-var camPos = cam.placeable.transform;
-camPos.pos.x = 0;
-camPos.pos.y = minCameraPosY;
-camPos.pos.z = 0;
-camPos.rot.x = -90;
-cam.placeable.transform = camPos;
-
 // PLAYERS
 var playerAmount = 0;
 var spectatorAmount = 0;
 var players = [];
 
 // OTHER
-var sceneController = scene.GetEntityByName("SceneController");
-
+var carController = scene.GetEntityByName("CarController");
 
 function CreateCar(playerID) {
 	var car = scene.CreateEntity(scene.NextFreeId(), ["Name", "Placeable", "DynamicComponent"]);
@@ -62,8 +49,8 @@ function CreateCar(playerID) {
 	// List of cars
 	var cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
 
-	// Set the car list to scene controller's dynamic component
-	var attrs = sceneController.dynamiccomponent;
+	// Set the car list to car controller's dynamic component
+	var attrs = carController.dynamiccomponent;
 	var carList = [];
 
 	for (var i = 0; i < cars.length; i++) {
@@ -72,7 +59,7 @@ function CreateCar(playerID) {
 	attrs.SetAttribute("cars", carList);
 
 	// Notify clients that the car is created
-	sceneController.Exec(4, "carCreated", "carCreated", cars.length);
+	carController.Exec(4, "carCreated", "carCreated", cars.length);
 }
 
 // Player connected
@@ -110,7 +97,7 @@ function ServerHandleUserDisconnected(userID, userConnection) {
 	// Remove the car
 
 	// Get the car list
-	var attrs = sceneController.dynamiccomponent;
+	var attrs = carController.dynamiccomponent;
 	var carList = attrs.GetAttribute("cars");
 
 	for (var i = 0; i < carList.length; i++) {

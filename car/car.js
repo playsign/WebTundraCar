@@ -14,7 +14,7 @@ function Car(webTundraApp) {
 
     this.app = webTundraApp;
     // TODO this.hotkeys{}
-    this.serverSceneCtrl = undefined;
+    this.serverCarCtrl = undefined;
     this.reservedCar = undefined;
     this.vehicle = undefined;
     this.input = undefined;
@@ -102,9 +102,9 @@ Car.prototype = {
         this.reservedCar = undefined;
 
         // Find a car that matches with the player
-        this.serverSceneCtrl = this.app.dataConnection.scene.entityByName("SceneController");
-        for (var i = 0; i < this.serverSceneCtrl.dynamicComponent.cars.length; i++) {
-            var entityID = this.serverSceneCtrl.dynamicComponent.cars[i];
+        this.serverCarCtrl = this.app.dataConnection.scene.entityByName("CarController");
+        for (var i = 0; i < this.serverCarCtrl.dynamicComponent.cars.length; i++) {
+            var entityID = this.serverCarCtrl.dynamicComponent.cars[i];
             var entity = this.app.dataConnection.scene.entityById(entityID);
             if (!entity) {
                 console.log("entity not found: " + entityID);
@@ -203,9 +203,9 @@ Car.prototype = {
             }
 
             // Apply new received car placeable positions (excluding our car) to corresponding placeable transforms
-            if (this.serverSceneCtrl) {
-                for (var i = 0; i < this.serverSceneCtrl.dynamicComponent.cars.length; i++) {
-                    var entID = this.serverSceneCtrl.dynamicComponent.cars[i];
+            if (this.serverCarCtrl) {
+                for (var i = 0; i < this.serverCarCtrl.dynamicComponent.cars.length; i++) {
+                    var entID = this.serverCarCtrl.dynamicComponent.cars[i];
                     var entity = this.app.dataConnection.scene.entityById(entID);
                     if (!entity || entity.dynamicComponent.name !== "Car" || entity.boxMesh === "loading" || entity.dynamicComponent.playerID == this.app.dataConnection.loginData.name) {
                         continue;
