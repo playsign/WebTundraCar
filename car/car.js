@@ -8,8 +8,8 @@
  */
 
 function Car(webTundraApp) {
-    if(webTundraApp instanceof Application === false){
-        throw("Instance of WebTundra application is required");
+    if (webTundraApp instanceof Application === false) {
+        throw ("Instance of WebTundra application is required");
     }
 
     this.app = webTundraApp;
@@ -93,27 +93,29 @@ Car.prototype = {
     // Connected to the server
     connectionEstablished: function() {
         // Set callback function to know when a car is created
-        this.app.dataConnection.scene.actionTriggered.add(this.findMyCar.bind(this));
+        this.app.dataConnection.scene.actionTriggered.add(this.onActionTriggered.bind(this));
     },
 
-    findMyCar: function() {
-        console.log("findMyCar");
+    onActionTriggered: function(scope, param2, param3, param4) {
+        if (param2 === "carCreated") {
+            console.log("findMyCar");
 
-        this.reservedCar = undefined;
+            this.reservedCar = undefined;
 
-        // Find a car that matches with the player
-        this.serverCarCtrl = this.app.dataConnection.scene.entityByName("CarController");
-        for (var i = 0; i < this.serverCarCtrl.dynamicComponent.cars.length; i++) {
-            var entityID = this.serverCarCtrl.dynamicComponent.cars[i];
-            var entity = this.app.dataConnection.scene.entityById(entityID);
-            if (!entity) {
-                console.log("entity not found: " + entityID);
-            } else if (entity.dynamicComponent.name === "Car" && entity.dynamicComponent.playerID == this.app.dataConnection.loginData.name) {
-                // Set entity reference
-                this.reservedCar = entity;
-                console.log("reserved car id: " + entity.id);
+            // Find a car that matches with the player
+            this.serverCarCtrl = this.app.dataConnection.scene.entityByName("CarController");
+            for (var i = 0; i < this.serverCarCtrl.dynamicComponent.cars.length; i++) {
+                var entityID = this.serverCarCtrl.dynamicComponent.cars[i];
+                var entity = this.app.dataConnection.scene.entityById(entityID);
+                if (!entity) {
+                    console.log("entity not found: " + entityID);
+                } else if (entity.dynamicComponent.name === "Car" && entity.dynamicComponent.playerID == this.app.dataConnection.loginData.name) {
+                    // Set entity reference
+                    this.reservedCar = entity;
+                    console.log("reserved car id: " + entity.id);
 
-                break;
+                    break;
+                }
             }
         }
     },
