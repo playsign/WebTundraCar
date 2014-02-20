@@ -7,9 +7,13 @@
  *      Date: 2014
  */
 
-function Car(webTundraApp) {
+function Car(webTundraApp, position) {
     if (webTundraApp instanceof Application === false) {
         throw ("Instance of WebTundra application is required");
+    }
+
+    if(!position){
+        position = new THREE.Vector3();
     }
 
     this.app = webTundraApp;
@@ -29,7 +33,7 @@ function Car(webTundraApp) {
                 car,
                 new THREE.MeshFaceMaterial(car_materials),
                 mass);
-            mesh.position.y = 2;
+            mesh.position = position;
             mesh.castShadow = mesh.receiveShadow = true;
 
             this.vehicle = new Physijs.Vehicle(mesh, new Physijs.VehicleTuning(

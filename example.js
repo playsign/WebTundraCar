@@ -104,7 +104,7 @@ function init() {
     // app.viewer.scene.add(carSize);
 
     // Car
-    app.car = new Car(app);   
+    app.car = new Car(app, new THREE.Vector3( 0, 2, 0));   
 
     // CAMERA
     app.viewer.camera.position.set(0, 100, 87);
