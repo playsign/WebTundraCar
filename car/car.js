@@ -12,7 +12,7 @@ function Car(webTundraApp, position) {
         throw ("Instance of WebTundra application is required");
     }
 
-    if(!position){
+    if (!position) {
         position = new THREE.Vector3();
     }
 
@@ -22,12 +22,13 @@ function Car(webTundraApp, position) {
     this.reservedCar = undefined;
     this.vehicle = undefined;
     this.input = undefined;
+    this.scale = 0.5;
 
     var loader = new THREE.JSONLoader();
     this.clock = new THREE.Clock();
 
-    loader.load("car/mustang.js", function(car, car_materials) {
-        loader.load("car/mustang_wheel.js", function(wheel, wheel_materials) {
+    loader.load("car/GreenCarBase.js", function(car, car_materials) {
+        loader.load("car/GreenCarWheel.js", function(wheel, wheel_materials) {
             var mass = 1500;
             var mesh = new Physijs.BoxMesh(
                 car,
@@ -57,12 +58,13 @@ function Car(webTundraApp, position) {
                     wheel,
                     wheel_material,
                     new THREE.Vector3(
-                    i % 2 === 0 ? -1.6 : 1.6, -1,
-                    i < 2 ? 3.3 : -3.2),
+                    i % 2 === 0 ? -1.9 * this.scale : 1.9 * this.scale,
+                    -0.6 * this.scale,
+                    i < 2 ? 3 * this.scale : -3 * this.scale),
                     new THREE.Vector3(0, -1, 0),
                     new THREE.Vector3(-1, 0, 0),
-                    0.5,
-                    0.7,
+                    0.5 * this.scale,
+                    0.7 * this.scale,
                     i < 2 ? false : true);
             }
 
@@ -226,12 +228,12 @@ Car.prototype = {
 
                         var scope = {
                             entity: ent,
-                            app: this.app
+                            app: this.app,
+                            scale: this.scale
                         }
 
-                        loader.load("car/mustang.js", function(car, car_materials) {
-
-                            loader.load("car/mustang_wheel.js", function(wheel, wheel_materials) {
+                        loader.load("car/GreenCarBase.js", function(car, car_materials) {
+                            loader.load("car/GreenCarWheel.js", function(wheel, wheel_materials) {
                                 var newCar = this.entity;
                                 console.log("loader.load");
 
@@ -240,7 +242,6 @@ Car.prototype = {
                                     car,
                                     new THREE.MeshFaceMaterial(car_materials),
                                     mass);
-                                newCar.boxMesh.position.y = 2;
                                 newCar.boxMesh.castShadow = newCar.boxMesh.receiveShadow = true;
 
                                 this.app.viewer.scene.add(newCar.boxMesh);
@@ -248,17 +249,21 @@ Car.prototype = {
                                 // var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
 
                                 // for (var i = 0; i < 4; i++) {
-                                //     this.app.vehicle.addWheel(
+                                //     this.vehicle.addWheel(
                                 //         wheel,
                                 //         wheel_material,
                                 //         new THREE.Vector3(
-                                //         i % 2 === 0 ? -1.6 : 1.6, -1,
-                                //         i < 2 ? 3.3 : -3.2),
+                                //         i % 2 === 0 ? -1.6 * this.scale : 1.6 * this.scale, -1 * this.scale,
+                                //         i < 2 ? 3.3 * this.scale : -3.2 * this.scale),
                                 //         new THREE.Vector3(0, -1, 0),
                                 //         new THREE.Vector3(-1, 0, 0),
-                                //         0.5,
-                                //         0.7,
+                                //         0.5 * this.scale,
+                                //         0.7 * this.scale,
                                 //         i < 2 ? false : true);
+                                // }
+
+                                // for (var i = 0; i < this.vehicle.wheels.length; i++) {
+                                //     this.vehicle.wheels[i].scale.set(this.scale, this.scale, this.scale);
                                 // }
                             }.bind(this));
                         }.bind(scope));

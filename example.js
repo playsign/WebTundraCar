@@ -13,7 +13,7 @@ var ground_material;
 
 function init() {
     app = new CarApp();
-    var host = "10.10.3.28"; // hostname of the Tundra server
+    var host = "10.10.2.7"; // hostname of the Tundra server
     var port = 2345; // and port to the server
 
     app.start();
@@ -59,38 +59,38 @@ function init() {
     // WALLS
 
     var wall = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(1, 50, 200),
+        new THREE.CubeGeometry(1, 25, 50),
         ground_material,
         0 // mass
     );
-    wall.position.set(-50, 0, 0);
+    wall.position.set(-25, 0, 0);
     wall.receiveShadow = true;
     app.viewer.scene.add(wall);
 
     var wall = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(1, 50, 200),
+        new THREE.CubeGeometry(1, 25, 50),
         ground_material,
         0 // mass
     );
-    wall.position.set(50, 0, 0);
+    wall.position.set(25, 0, 0);
     wall.receiveShadow = true;
     app.viewer.scene.add(wall);
 
     var wall = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(200, 50, 1),
+        new THREE.CubeGeometry(50, 25, 1),
         ground_material,
         0 // mass
     );
-    wall.position.set(0, 0, -50);
+    wall.position.set(0, 0, -25);
     wall.receiveShadow = true;
     app.viewer.scene.add(wall);
 
     var wall = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(200, 10, 1),
+        new THREE.CubeGeometry(50, 10, 1),
         ground_material,
         0 // mass
     );
-    wall.position.set(0, 0, 50);
+    wall.position.set(0, 0, 25);
     wall.receiveShadow = true;
     app.viewer.scene.add(wall);
 
@@ -107,7 +107,7 @@ function init() {
     app.car = new Car(app, new THREE.Vector3( 0, 2, 0));   
 
     // CAMERA
-    app.viewer.camera.position.set(0, 100, 87);
+    app.viewer.camera.position.set(0, 50, 60);
     app.viewer.camera.lookAt(new THREE.Vector3());
 
     // // FREE LOOK
