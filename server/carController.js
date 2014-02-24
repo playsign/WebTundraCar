@@ -104,27 +104,26 @@ function ServerHandleUserDisconnected(userID, userConnection) {
 		var car = scene.EntityById(carList[i]);
 
 		if (car.dynamiccomponent.GetAttribute("playerID") == userConnection.Property("name")) {
-			console.LogInfo("Remove car");
-			console.LogInfo(carList[i]);
-			scene.RemoveEntity(carList[i]);
+			console.LogInfo("Remove car: " + carList[i]);
+			scene.RemoveEntity(carList[i]);			
 
-			// // Update the list of cars
-			// var cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
-			
-			// var carList = [];
+			// Update the list of cars
+			var cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
 
-			// for (var i = 0; i < cars.length; i++) {
-			// 	carList.push(cars[i].id);
-			// }
-			// attrs.SetAttribute("cars", carList);
+			carList = [];
+
+			for (var i = 0; i < cars.length; i++) {
+				carList.push(cars[i].id);
+			}
+			attrs.SetAttribute("cars", carList);
 
 			break;
 		}
 	}
 }
 
-function update(dt) {
+// function update(dt) {
 
-}
+// }
 
-frame.Updated.connect(update);
+// frame.Updated.connect(update);

@@ -47,7 +47,7 @@ function init() {
     ground_material.map.repeat.set(3, 3);
 
     var ground = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(200, 1, 200),
+        new THREE.CubeGeometry(400, 1, 400),
         ground_material,
         0 // mass
     );
@@ -86,7 +86,7 @@ function init() {
     app.viewer.scene.add(wall);
 
     var wall = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(50, 10, 1),
+        new THREE.CubeGeometry(50, 5, 1),
         ground_material,
         0 // mass
     );
