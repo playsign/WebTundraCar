@@ -28,7 +28,7 @@ function Car(webTundraApp, position) {
     this.clock = new THREE.Clock();
 
     loader.load("car/GreenCarBase.js", function(car, car_materials) {
-        loader.load("car/GreenCarWheel.js", function(wheel, wheel_materials) {
+        loader.load("car/GreenCarWheel.js", function(wheel_geometry, wheel_materials) {
             var mass = 1500;
             var mesh = new Physijs.BoxMesh(
                 car,
@@ -54,17 +54,16 @@ function Car(webTundraApp, position) {
             var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
 
             for (var i = 0; i < 4; i++) {
+                var wheelProperties = this.getWheelProperties(i);
+
                 this.vehicle.addWheel(
-                    wheel,
+                    wheel_geometry,
                     wheel_material,
-                    new THREE.Vector3(
-                    i % 2 === 0 ? -1.9 * this.scale : 1.9 * this.scale,
-                    -0.6 * this.scale,
-                    i < 2 ? 3 * this.scale : -3 * this.scale),
-                    new THREE.Vector3(0, -1, 0),
-                    new THREE.Vector3(-1, 0, 0),
-                    0.5 * this.scale,
-                    0.7 * this.scale,
+                    wheelProperties.connection_point,
+                    wheelProperties.wheel_direction,
+                    wheelProperties.wheel_axle,
+                    wheelProperties.suspension_rest_length,
+                    wheelProperties.wheel_radius,
                     i < 2 ? false : true);
             }
 
@@ -124,6 +123,20 @@ Car.prototype = {
                 }
             }
         }
+    },
+
+    getWheelProperties: function(i) {
+        var props = {};
+
+        props.connection_point = new THREE.Vector3(
+            i % 2 === 0 ? -1.9 * this.scale : 1.9 * this.scale, -0.6 * this.scale,
+            i < 2 ? 3 * this.scale : -3 * this.scale);
+        props.wheel_direction = new THREE.Vector3(0, -1, 0);
+        props.wheel_axle = new THREE.Vector3(-1, 0, 0);
+        props.suspension_rest_length = 0.5 * this.scale;
+        props.wheel_radius = 0.7 * this.scale;
+
+        return props;
     },
 
     update: function() {
@@ -228,12 +241,11 @@ Car.prototype = {
 
                         var scope = {
                             entity: ent,
-                            app: this.app,
-                            scale: this.scale
+                            car: this,
                         }
 
                         loader.load("car/GreenCarBase.js", function(car, car_materials) {
-                            loader.load("car/GreenCarWheel.js", function(wheel, wheel_materials) {
+                            loader.load("car/GreenCarWheel.js", function(wheel_geometry, wheel_materials) {
                                 var newCar = this.entity;
                                 console.log("loader.load");
 
@@ -244,27 +256,21 @@ Car.prototype = {
                                     mass);
                                 newCar.boxMesh.castShadow = newCar.boxMesh.receiveShadow = true;
 
-                                this.app.viewer.scene.add(newCar.boxMesh);
+                                this.car.app.viewer.scene.add(newCar.boxMesh);
 
-                                // var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
+                                var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
 
-                                // for (var i = 0; i < 4; i++) {
-                                //     this.vehicle.addWheel(
-                                //         wheel,
-                                //         wheel_material,
-                                //         new THREE.Vector3(
-                                //         i % 2 === 0 ? -1.6 * this.scale : 1.6 * this.scale, -1 * this.scale,
-                                //         i < 2 ? 3.3 * this.scale : -3.2 * this.scale),
-                                //         new THREE.Vector3(0, -1, 0),
-                                //         new THREE.Vector3(-1, 0, 0),
-                                //         0.5 * this.scale,
-                                //         0.7 * this.scale,
-                                //         i < 2 ? false : true);
-                                // }
+                                for (var i = 0; i < 4; i++) {
+                                    // Wheel properties
+                                    var wheelProperties = this.car.getWheelProperties(i);
 
-                                // for (var i = 0; i < this.vehicle.wheels.length; i++) {
-                                //     this.vehicle.wheels[i].scale.set(this.scale, this.scale, this.scale);
-                                // }
+                                    // Wheel mesh
+                                    var wheelMesh = new THREE.Mesh(wheel_geometry, wheel_material);
+                                    wheelMesh.castShadow = wheelMesh.receiveShadow = true;
+                                    wheelMesh.position.copy(wheelProperties.wheel_direction).multiplyScalar(wheelProperties.suspension_rest_length / 100).add(wheelProperties.connection_point);
+                                    newCar.boxMesh.add(wheelMesh);
+                                    // this.wheels.push(wheelMesh);
+                                }
                             }.bind(this));
                         }.bind(scope));
                     } else {
