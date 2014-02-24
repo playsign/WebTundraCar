@@ -34,8 +34,19 @@ function init() {
     app.physics_stats.domElement.style.zIndex = 100;
     app.viewer.container.appendChild(app.physics_stats.domElement);
 
-    // GROUND
+    function createElement(pos, rot, scale) {
+        var element = new Physijs.BoxMesh(
+            new THREE.CubeGeometry(scale.x, scale.y, scale.z),
+            ground_material,
+            0 // mass
+        );
+        element.position.set(pos.x, pos.y, pos.z);
+        element.rotation.set(rot.x, rot.y, rot.z);
+        element.receiveShadow = true;
+        app.viewer.scene.add(element);
+    }
 
+    // GROUND
     ground_material = Physijs.createMaterial(
         new THREE.MeshLambertMaterial({
         map: THREE.ImageUtils.loadTexture('images/rocks.jpg')
@@ -45,69 +56,23 @@ function init() {
     );
     ground_material.map.wrapS = ground_material.map.wrapT = THREE.RepeatWrapping;
     ground_material.map.repeat.set(3, 3);
+    createElement({x: 0, y:-3, z:0}, {x: 0, y:0, z:0}, {x: 400, y:1, z:400});
 
-    var ground = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(400, 1, 400),
-        ground_material,
-        0 // mass
-    );
-    ground.position.set(0, -3, 0);
-    // ground.rotation.set(0,0,0.2);
-    ground.receiveShadow = true;
-    app.viewer.scene.add(ground);
+    // RAMPS
+    createElement({x: 0, y:-3, z:-10}, {x: -0.2, y:0, z:0}, {x: 10, y:1, z:13});
+    createElement({x: 10, y:-3, z:-10}, {x: -0.5, y:0, z:0}, {x: 10, y:1, z:25});
 
     // WALLS
-
-    var wall = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(1, 25, 50),
-        ground_material,
-        0 // mass
-    );
-    wall.position.set(-25, 0, 0);
-    wall.receiveShadow = true;
-    app.viewer.scene.add(wall);
-
-    var wall = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(1, 25, 50),
-        ground_material,
-        0 // mass
-    );
-    wall.position.set(25, 0, 0);
-    wall.receiveShadow = true;
-    app.viewer.scene.add(wall);
-
-    var wall = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(50, 25, 1),
-        ground_material,
-        0 // mass
-    );
-    wall.position.set(0, 0, -25);
-    wall.receiveShadow = true;
-    app.viewer.scene.add(wall);
-
-    var wall = new Physijs.BoxMesh(
-        new THREE.CubeGeometry(50, 5, 1),
-        ground_material,
-        0 // mass
-    );
-    wall.position.set(0, 0, 25);
-    wall.receiveShadow = true;
-    app.viewer.scene.add(wall);
-
-    // carSize = new Physijs.BoxMesh(
-    //     new THREE.CubeGeometry(1, 4, 1),
-    //     ground_material,
-    //     0 // mass
-    // );
-    // carSize.position.set(0, 0, 0);
-    // carSize.receiveShadow = true;
-    // app.viewer.scene.add(carSize);
+    createElement({x: -25, y:0, z:-25}, {x: 0, y:0, z:0}, {x: 1, y:25, z:100});
+    createElement({x: 25, y:0, z:-25}, {x: 0, y:0, z:0}, {x: 1, y:25, z:100});
+    createElement({x: 0, y:0, z:-75}, {x: 0, y:0, z:0}, {x: 50, y:25, z:1});
+    createElement({x: 0, y:0, z:25}, {x: 0, y:0, z:0}, {x: 50, y:5, z:1});
 
     // Car
-    app.car = new Car(app, new THREE.Vector3( 0, 2, 0));   
+    app.car = new Car(app, new THREE.Vector3(0, 2, -60));
 
     // CAMERA
-    app.viewer.camera.position.set(0, 50, 60);
+    app.viewer.camera.position.set(0, 40, 60);
     app.viewer.camera.lookAt(new THREE.Vector3());
 
     // // FREE LOOK
