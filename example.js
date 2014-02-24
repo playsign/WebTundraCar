@@ -56,7 +56,7 @@ function init() {
     );
     ground_material.map.wrapS = ground_material.map.wrapT = THREE.RepeatWrapping;
     ground_material.map.repeat.set(3, 3);
-    createElement({x: 0, y:-3, z:0}, {x: 0, y:0, z:0}, {x: 400, y:1, z:400});
+    createElement({x: 0, y:-3, z:-25}, {x: 0, y:0, z:0}, {x: 50, y:1, z:100});
 
     // RAMPS
     createElement({x: 0, y:-3, z:-10}, {x: -0.2, y:0, z:0}, {x: 10, y:1, z:13});
@@ -72,7 +72,7 @@ function init() {
     app.car = new Car(app, new THREE.Vector3(0, 2, -60));
 
     // CAMERA
-    app.viewer.camera.position.set(0, 40, 60);
+    app.viewer.camera.position.set(0, 20, 40);
     app.viewer.camera.lookAt(new THREE.Vector3());
 
     // // FREE LOOK
@@ -100,6 +100,11 @@ CarApp.prototype.logicUpdate = function(dt) {
 
     // PHYSICS
 
+    // Fixed time step
+    // app.viewer.scene.setFixedTimeStep(1 / 240);
+    // var timeStep = 1 / 60;
+    // var maxSubSteps = 5;
+    // this.viewer.scene.simulate(timeStep, maxSubSteps); // run physics
     this.viewer.scene.simulate(); // run physics
 
     if (this.physics_stats) {

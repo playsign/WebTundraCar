@@ -133,7 +133,7 @@ Car.prototype = {
             i < 2 ? 3 * this.scale : -3 * this.scale);
         props.wheel_direction = new THREE.Vector3(0, -1, 0);
         props.wheel_axle = new THREE.Vector3(-1, 0, 0);
-        props.suspension_rest_length = 0.5 * this.scale;
+        props.suspension_rest_length = 0.4 * this.scale;
         props.wheel_radius = 0.7 * this.scale;
 
         return props;
