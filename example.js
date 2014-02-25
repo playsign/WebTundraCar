@@ -158,6 +158,7 @@ function init() {
     // CAMERA
     app.viewer.camera.position.set(0, 20, 40);
     app.viewer.camera.lookAt(new THREE.Vector3());
+    app.car.useCameraFollow = false;
 
     // // FREE LOOK
     // var freeLookCtrl = new THREE.FreeLookControls(app.viewer.camera, app.viewer.renderer.domElement);
@@ -194,7 +195,6 @@ CarApp.prototype.logicUpdate = function(dt) {
     if (this.physics_stats) {
         this.physics_stats.update();
     }
-
 };
 
 init();

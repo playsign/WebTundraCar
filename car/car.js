@@ -39,6 +39,7 @@ function Car(webTundraApp, position) {
     this.vehicle = undefined;
     this.input = undefined;
     this.scale = 0.5;
+    this.useCameraFollow = false;
 
     var loader = new THREE.JSONLoader();
     this.clock = new THREE.Clock();
@@ -302,6 +303,19 @@ Car.prototype = {
 
             // Inform the server about the change
             this.app.dataConnection.syncManager.sendChanges();
+        }
+
+        // Camera follow
+        if (this.useCameraFollow && this.vehicle) {
+            var relativeCameraOffset = new THREE.Vector3(0, 3, -15);
+
+            var cameraOffset = relativeCameraOffset.applyMatrix4(this.vehicle.mesh.matrixWorld);
+
+            this.app.viewer.camera.position.x = cameraOffset.x;
+            this.app.viewer.camera.position.y = cameraOffset.y;
+            this.app.viewer.camera.position.z = cameraOffset.z;
+            this.app.viewer.camera.lookAt(this.vehicle.mesh.position);
+            this.app.viewer.camera.position.y += 3;
         }
 
         requestAnimationFrame(function() {
