@@ -22,18 +22,6 @@ function init() {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    // Custom app specific properties
-    app.dataConnection.loginData = {
-        "name": Date.now().toString() + getRandomInt(0, 2000000).toString()
-    };
-
-    // STATS
-    app.physics_stats = new Stats();
-    app.physics_stats.domElement.style.position = 'absolute';
-    app.physics_stats.domElement.style.bottom = '50px';
-    app.physics_stats.domElement.style.zIndex = 100;
-    app.viewer.container.appendChild(app.physics_stats.domElement);
-
     function createElement(pos, rot, scale) {
         var element = new Physijs.BoxMesh(
             new THREE.CubeGeometry(scale.x, scale.y, scale.z),
@@ -46,6 +34,18 @@ function init() {
         app.viewer.scene.add(element);
     }
 
+    // Custom app specific properties
+    app.dataConnection.loginData = {
+        "name": Date.now().toString() + getRandomInt(0, 2000000).toString()
+    };
+
+    // STATS
+    app.physics_stats = new Stats();
+    app.physics_stats.domElement.style.position = 'absolute';
+    app.physics_stats.domElement.style.bottom = '50px';
+    app.physics_stats.domElement.style.zIndex = 100;
+    app.viewer.container.appendChild(app.physics_stats.domElement);
+
     // GROUND
     ground_material = Physijs.createMaterial(
         new THREE.MeshLambertMaterial({
@@ -56,17 +56,101 @@ function init() {
     );
     ground_material.map.wrapS = ground_material.map.wrapT = THREE.RepeatWrapping;
     ground_material.map.repeat.set(3, 3);
-    createElement({x: 0, y:-3, z:-25}, {x: 0, y:0, z:0}, {x: 50, y:1, z:100});
+    createElement({
+        x: 0,
+        y: -3,
+        z: -25
+    }, {
+        x: 0,
+        y: 0,
+        z: 0
+    }, {
+        x: 50,
+        y: 1,
+        z: 100
+    });
 
     // RAMPS
-    createElement({x: 0, y:-3, z:-10}, {x: -0.2, y:0, z:0}, {x: 10, y:1, z:13});
-    createElement({x: 10, y:-3, z:-10}, {x: -0.5, y:0, z:0}, {x: 10, y:1, z:25});
+    createElement({
+        x: 0,
+        y: -3,
+        z: -10
+    }, {
+        x: -0.2,
+        y: 0,
+        z: 0
+    }, {
+        x: 10,
+        y: 1,
+        z: 13
+    });
+    createElement({
+        x: 10,
+        y: -3,
+        z: -10
+    }, {
+        x: -0.5,
+        y: 0,
+        z: 0
+    }, {
+        x: 10,
+        y: 1,
+        z: 25
+    });
 
     // WALLS
-    createElement({x: -25, y:0, z:-25}, {x: 0, y:0, z:0}, {x: 1, y:25, z:100});
-    createElement({x: 25, y:0, z:-25}, {x: 0, y:0, z:0}, {x: 1, y:25, z:100});
-    createElement({x: 0, y:0, z:-75}, {x: 0, y:0, z:0}, {x: 50, y:25, z:1});
-    createElement({x: 0, y:0, z:25}, {x: 0, y:0, z:0}, {x: 50, y:5, z:1});
+    createElement({
+        x: -25,
+        y: 0,
+        z: -25
+    }, {
+        x: 0,
+        y: 0,
+        z: 0
+    }, {
+        x: 1,
+        y: 25,
+        z: 100
+    });
+    createElement({
+        x: 25,
+        y: 0,
+        z: -25
+    }, {
+        x: 0,
+        y: 0,
+        z: 0
+    }, {
+        x: 1,
+        y: 25,
+        z: 100
+    });
+    createElement({
+        x: 0,
+        y: 0,
+        z: -75
+    }, {
+        x: 0,
+        y: 0,
+        z: 0
+    }, {
+        x: 50,
+        y: 25,
+        z: 1
+    });
+    createElement({
+        x: 0,
+        y: 0,
+        z: 25
+    }, {
+        x: 0,
+        y: 0,
+        z: 0
+    }, {
+        x: 50,
+        y: 5,
+        z: 1
+    });
 
     // Car
     app.car = new Car(app, new THREE.Vector3(0, 2, -60));

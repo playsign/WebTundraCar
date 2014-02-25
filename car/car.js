@@ -17,7 +17,23 @@ function Car(webTundraApp, position) {
     }
 
     this.app = webTundraApp;
-    // TODO this.hotkeys{}
+    this.keyconfig = {
+        // Steer left
+        left: "left",
+        leftSecondary: "a",
+        // Steer right
+        right: "right",
+        rightSecondary: "d",
+        // Accelerate 
+        accelerate: "up",
+        accelerateSecondary: "w",
+        // Deccelerate
+        deccelearate: "down",
+        deccelerateSecondary: "s",
+        // Brake
+        brake: "space",
+        brakeSecondary: "ctrl"
+    };
     this.serverCarCtrl = undefined;
     this.reservedCar = undefined;
     this.vehicle = undefined;
@@ -145,19 +161,19 @@ Car.prototype = {
         // INPUT
         if (this.input) {
             // Steering
-            if (this.app.keyboard.pressed("left") || this.app.keyboard.pressed("a")) {
+            if (this.app.keyboard.pressed(this.keyconfig.left) || this.app.keyboard.pressed(this.keyconfig.leftSecondary)) {
                 this.input.direction = 1;
-            } else if (this.app.keyboard.pressed("right") || this.app.keyboard.pressed("d")) {
+            } else if (this.app.keyboard.pressed(this.keyconfig.right) || this.app.keyboard.pressed(this.keyconfig.rightSecondary)) {
                 this.input.direction = -1;
             } else {
                 this.input.direction = 0;
             }
 
-            // Acceleration
-            if (this.app.keyboard.pressed("up") || this.app.keyboard.pressed("w")) {
+            // Acceleration and decceleration
+            if (this.app.keyboard.pressed(this.keyconfig.accelerate) || this.app.keyboard.pressed(this.keyconfig.accelerateSecondary)) {
                 this.input.power = true;
                 this.vehicle.engineForceAmount = this.vehicle.engineForwardForce;
-            } else if (this.app.keyboard.pressed("down") || this.app.keyboard.pressed("s")) {
+            } else if (this.app.keyboard.pressed(this.keyconfig.deccelearate) || this.app.keyboard.pressed(this.keyconfig.deccelerateSecondary)) {
                 this.input.power = true;
                 this.vehicle.engineForceAmount = this.vehicle.engineBackwardForce;
             } else {
@@ -165,7 +181,7 @@ Car.prototype = {
             }
 
             // Brake
-            if (this.app.keyboard.pressed("space")) {
+            if (this.app.keyboard.pressed(this.keyconfig.brake) || this.app.keyboard.pressed(this.keyconfig.brakeSecondary)) {
                 this.vehicle.setBrake(this.vehicle.brakeAmount, 2);
                 this.vehicle.setBrake(this.vehicle.brakeAmount, 3);
             } else {
@@ -292,4 +308,4 @@ Car.prototype = {
             this.update();
         }.bind(this));
     },
-}
+};
