@@ -190,6 +190,7 @@ CarApp.prototype.logicUpdate = function(dt) {
     // var timeStep = 1 / 60;
     // var maxSubSteps = 5;
     // this.viewer.scene.simulate(timeStep, maxSubSteps); // run physics
+    
     this.viewer.scene.simulate(); // run physics
 
     if (this.physics_stats) {

@@ -238,6 +238,18 @@ Car.prototype = {
                 // console.log(newTransform.rot);
 
                 this.reservedCar.placeable.transform = newTransform;
+
+                // Set velocity to dynamic component
+                this.reservedCar.dynamicComponent.linearVelocity = {
+                    x: this.vehicle.mesh.getLinearVelocity().x,
+                    y: this.vehicle.mesh.getLinearVelocity().y,
+                    z: this.vehicle.mesh.getLinearVelocity().z
+                };
+                this.reservedCar.dynamicComponent.angularVelocity = {
+                    x: this.vehicle.mesh.getAngularVelocity().x,
+                    y: this.vehicle.mesh.getAngularVelocity().y,
+                    z: this.vehicle.mesh.getAngularVelocity().z
+                };
             }
 
             // Apply new received car placeable positions (excluding our car) to corresponding placeable transforms
@@ -271,6 +283,7 @@ Car.prototype = {
                                     car,
                                     new THREE.MeshFaceMaterial(car_materials),
                                     mass);
+                                // newCar.boxMesh._physijs.collision_flags = 2; // set as kinematic
                                 newCar.boxMesh.castShadow = newCar.boxMesh.receiveShadow = true;
 
                                 this.car.app.viewer.scene.add(newCar.boxMesh);
@@ -291,12 +304,61 @@ Car.prototype = {
                             }.bind(this));
                         }.bind(scope));
                     } else {
-                        ent.boxMesh.__dirtyPosition = true;
-                        ent.boxMesh.__dirtyRotation = true;
 
-                        copyXyz(ent.placeable.transform.pos, ent.boxMesh.position);
-                        copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
-                        tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
+                        if (!ent.previousThreePos || !(ent.previousThreePos.x == ent.placeable.transform.pos.x && ent.previousThreePos.y == ent.placeable.transform.pos.y && ent.previousThreePos.z == ent.placeable.transform.pos.z)) {
+                            // console.log("set position");
+
+                            // console.clear();
+                            // console.log(ent.previousThreePos);
+                            // console.log(ent.placeable.transform.pos);
+
+                            ent.boxMesh.__dirtyPosition = true;
+                            ent.boxMesh.__dirtyRotation = true;
+
+                            // Greatly reduces "saw" motion
+                            var averagePos = {
+                                x: (ent.boxMesh.position.x + ent.placeable.transform.pos.x) / 2,
+                                y: (ent.boxMesh.position.y + ent.placeable.transform.pos.y) / 2,
+                                z: (ent.boxMesh.position.z + ent.placeable.transform.pos.z) / 2
+                            };
+
+                            // Rotation                      
+                            var tempThreeRot = new THREE.Vector3();
+                            tundraToThreeEuler(ent.placeable.transform.rot, tempThreeRot, this.app.viewer.degToRad);
+                            // console.log(ent.boxMesh.rotation.order);
+                            // ent.boxMesh.rotation.order = "XYZ";
+                            ent.boxMesh.rotation.x = (ent.boxMesh.rotation.x + tempThreeRot.x) / 2,
+                            ent.boxMesh.rotation.y = (ent.boxMesh.rotation.y + tempThreeRot.y) / 2,
+                            ent.boxMesh.rotation.z = (ent.boxMesh.rotation.z + tempThreeRot.z) / 2
+
+                            copyXyz(averagePos, ent.boxMesh.position);
+                            copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
+                            tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
+                            ent.previousThreePos = ent.placeable.transform.pos;
+
+                            // copyXyz(ent.placeable.transform.pos, ent.boxMesh.position);
+                            // copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
+                            // tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
+
+                            // Set velocity to boxMesh
+                            ent.boxMesh.setLinearVelocity(new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z));
+                            ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
+
+                            // var averageLinearVelocity = {
+                            //     x: (ent.dynamicComponent.linearVelocity.x + ent.boxMesh.getLinearVelocity().x) / 2,
+                            //     y: (ent.dynamicComponent.linearVelocity.y + ent.boxMesh.getLinearVelocity().y) / 2,
+                            //     z: (ent.dynamicComponent.linearVelocity.z + ent.boxMesh.getLinearVelocity().z) / 2
+                            // };
+                            // ent.boxMesh.setLinearVelocity(new THREE.Vector3(averageLinearVelocity.x, averageLinearVelocity.y, averageLinearVelocity.z));
+                            // ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
+
+                        } else {
+                            // console.log("don't set position");
+                        }
+
+                        // console.clear();
+                        // console.log(ent.boxMesh.getLinearVelocity());
+
                     }
                 }
             }

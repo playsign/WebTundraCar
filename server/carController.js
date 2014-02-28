@@ -25,6 +25,7 @@ var players = [];
 
 // OTHER
 var carController = scene.GetEntityByName("CarController");
+var zeroFloat3 = new float3(0, 0, 0);
 
 function CreateCar(playerID) {
 	var car = scene.CreateEntity(scene.NextFreeId(), ["Name", "Placeable", "DynamicComponent"]);
@@ -45,6 +46,10 @@ function CreateCar(playerID) {
 	attrs.name = "Car";
 	attrs.CreateAttribute("string", "playerID");
 	attrs.SetAttribute("playerID", playerID);
+	attrs.CreateAttribute("float3", "linearVelocity");
+	attrs.SetAttribute("linearVelocity", zeroFloat3);
+	attrs.CreateAttribute("float3", "angularVelocity");
+	attrs.SetAttribute("angularVelocity", zeroFloat3);
 
 	// List of cars
 	var cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
