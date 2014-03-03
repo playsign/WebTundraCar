@@ -284,6 +284,7 @@ Car.prototype = {
                                     new THREE.MeshFaceMaterial(car_materials),
                                     mass);
                                 // newCar.boxMesh._physijs.collision_flags = 2; // set as kinematic
+                                newCar.boxMesh._physijs.isRemoteObject = true; // custom physijs property
                                 newCar.boxMesh.castShadow = newCar.boxMesh.receiveShadow = true;
 
                                 this.car.app.viewer.scene.add(newCar.boxMesh);
@@ -340,9 +341,24 @@ Car.prototype = {
                             // copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
                             // tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
 
-                            // Set velocity to boxMesh
-                            ent.boxMesh.setLinearVelocity(new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z));
-                            ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
+                            var found = false;
+                            // Loop touches of the local vehicle
+                            for (var i = 0; i < this.vehicle.mesh._physijs.touches.length; i++) {
+                                if (ent.boxMesh._physijs === this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs && this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs.isRemoteObject) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+
+                            if (found === false) {
+                                // console.log("set pos and velo");
+                                // Set velocity to boxMesh
+                                ent.boxMesh.setLinearVelocity(new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z));
+                                ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
+                            } else {
+                                // debugger;
+                                // console.log("don't set velo");
+                            }
 
                             // var averageLinearVelocity = {
                             //     x: (ent.dynamicComponent.linearVelocity.x + ent.boxMesh.getLinearVelocity().x) / 2,
