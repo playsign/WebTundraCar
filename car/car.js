@@ -284,7 +284,7 @@ Car.prototype = {
                                     new THREE.MeshFaceMaterial(car_materials),
                                     mass);
                                 // newCar.boxMesh._physijs.collision_flags = 2; // set as kinematic
-                                newCar.boxMesh._physijs.isRemoteObject = true; // custom physijs property
+                                // newCar.boxMesh._physijs.isRemoteObject = true; // custom physijs property
                                 newCar.boxMesh.castShadow = newCar.boxMesh.receiveShadow = true;
 
                                 this.car.app.viewer.scene.add(newCar.boxMesh);
@@ -306,59 +306,62 @@ Car.prototype = {
                         }.bind(scope));
                     } else {
 
-                        if (!ent.previousThreePos || !(ent.previousThreePos.x == ent.placeable.transform.pos.x && ent.previousThreePos.y == ent.placeable.transform.pos.y && ent.previousThreePos.z == ent.placeable.transform.pos.z)) {
+                        if (!ent.previousThreePos) {
+                            // Save current position for next update
+                            ent.previousThreePos = new THREE.Vector3();
+                            copyXyz(ent.placeable.transform.pos, ent.previousThreePos);
+
+                            copyXyz(ent.placeable.transform.pos, ent.boxMesh.position);
+                            copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
+                            tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
+                        } else if (!(ent.previousThreePos.x == ent.placeable.transform.pos.x && ent.previousThreePos.y == ent.placeable.transform.pos.y && ent.previousThreePos.z == ent.placeable.transform.pos.z)) {
+
                             // console.log("set position");
 
                             // console.clear();
                             // console.log(ent.previousThreePos);
                             // console.log(ent.placeable.transform.pos);
 
-                            ent.boxMesh.__dirtyPosition = true;
-                            ent.boxMesh.__dirtyRotation = true;
+                            var newPosition = new THREE.Vector3();
+                            copyXyz(ent.placeable.transform.pos, newPosition);
 
-                            // Greatly reduces "saw" motion
-                            var averagePos = {
-                                x: (ent.boxMesh.position.x + ent.placeable.transform.pos.x) / 2,
-                                y: (ent.boxMesh.position.y + ent.placeable.transform.pos.y) / 2,
-                                z: (ent.boxMesh.position.z + ent.placeable.transform.pos.z) / 2
-                            };
+                            var newVelocity = newPosition.sub(ent.previousThreePos).multiplyScalar(1);
+                            ent.boxMesh.setLinearVelocity(newVelocity);
+                            // ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
 
-                            // Rotation                      
-                            var tempThreeRot = new THREE.Vector3();
-                            tundraToThreeEuler(ent.placeable.transform.rot, tempThreeRot, this.app.viewer.degToRad);
-                            // console.log(ent.boxMesh.rotation.order);
-                            // ent.boxMesh.rotation.order = "XYZ";
-                            ent.boxMesh.rotation.x = (ent.boxMesh.rotation.x + tempThreeRot.x) / 2,
-                            ent.boxMesh.rotation.y = (ent.boxMesh.rotation.y + tempThreeRot.y) / 2,
-                            ent.boxMesh.rotation.z = (ent.boxMesh.rotation.z + tempThreeRot.z) / 2
+                            console.clear();
+                            console.log(newVelocity);
 
-                            copyXyz(averagePos, ent.boxMesh.position);
+                            // copyXyz(averagePos, ent.boxMesh.position);
                             copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
+                            ent.boxMesh.__dirtyRotation = true;
                             tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
-                            ent.previousThreePos = ent.placeable.transform.pos;
+
+                            // Save current position for next update
+                            ent.previousThreePos = ent.boxMesh.position;
 
                             // copyXyz(ent.placeable.transform.pos, ent.boxMesh.position);
                             // copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
                             // tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
 
-                            var found = false;
-                            // Loop touches of the local vehicle
-                            for (var i = 0; i < this.vehicle.mesh._physijs.touches.length; i++) {
-                                if (ent.boxMesh._physijs === this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs && this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs.isRemoteObject) {
-                                    found = true;
-                                    break;
-                                }
-                            }
+                            // var found = false;
+                            // // Loop touches of the local vehicle
+                            // for (var i = 0; i < this.vehicle.mesh._physijs.touches.length; i++) {
+                            //     if (ent.boxMesh._physijs === this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs && this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs.isRemoteObject) {
+                            //         found = true;
+                            //         break;
+                            //     }
+                            // }
 
-                            if (found === false) {
-                                // console.log("set pos and velo");
-                                // Set velocity to boxMesh
-                                ent.boxMesh.setLinearVelocity(new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z));
-                                ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
-                            } else {
-                                // debugger;
-                                // console.log("don't set velo");
-                            }
+                            // if (found === false) {
+                            // console.log("set pos and velo");
+                            // Set velocity to boxMesh
+                            // ent.boxMesh.setLinearVelocity(new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z));
+                            // ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
+                            // } else {
+                            //     // debugger;
+                            //     // console.log("don't set velo");
+                            // }
 
                             // var averageLinearVelocity = {
                             //     x: (ent.dynamicComponent.linearVelocity.x + ent.boxMesh.getLinearVelocity().x) / 2,

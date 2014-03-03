@@ -153,7 +153,7 @@ function init() {
     });
 
     // Car
-    app.car = new Car(app, new THREE.Vector3(0, 2, -60));
+    app.car = new Car(app, new THREE.Vector3(0, 2, 0));
 
     // CAMERA
     app.viewer.camera.position.set(0, 20, 40);
