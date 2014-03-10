@@ -7,6 +7,128 @@
  *      Date: 2014
  */
 
+var print = false;
+var angularVelo, debugAngle, debugQ, debugQ2, debugQ3;
+var conjBoxQuater;
+var velQuater;
+
+
+function Subtract(qa, qb) {
+
+    qa._x -= qb._x;
+    qa._y -= qb._y;
+    qa._z -= qb._z;
+    qa._w -= qb._w;
+
+    qa._updateEuler();
+
+    return qa;
+
+};
+
+function MultiplyScalar(qa, s) {
+
+    qa._x *= s;
+    qa._y *= s;
+    qa._z *= s;
+    qa._w *= s;
+
+    qa._updateEuler();
+
+    return qa;
+
+};
+
+/**
+ * Returns the logarithm of the Quaternion.
+ *
+ * @see #exp()
+ */
+
+function Qlog(q) {
+    // Warning: this method should not normalize the Quaternion
+    var len = Math.sqrt(q.x * q.x + q.y * q.y + q.z * q.z);
+
+    if (len < 1000000)
+        return new THREE.Quaternion(q.x, q.y, q.z, 0);
+    else {
+        var coef = Math.acos(q.w) / len;
+        return new THREE.Quaternion(q.x * coef, q.y * coef, q.z * coef, 0);
+    }
+};
+
+/**
+ * Returns the exponential of the Quaternion.
+ *
+ * @see #log()
+ */
+
+function Qexp(q) {
+    var theta = Math.sqrt(q.x * q.x + q.y * q.y + q.z * q.z);
+
+    if (theta < 1000000)
+        return new THREE.Quaternion(q.x, q.y, q.z, Math.cos(theta));
+    else {
+        var coef = Math.sin(theta) / theta;
+        return new THREE.Quaternion(q.x * coef, q.y * coef, q.z * coef,
+            Math.cos(theta));
+    }
+};
+
+// http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/
+
+function QuaternionToAxisAngle(q1) {
+    var result = {
+        x: 0,
+        y: 0,
+        z: 0,
+        w: 0
+    };
+
+    if (q1.w > 1) q1.normalize(); // if w>1 acos and sqrt will produce errors, this cant happen if quaternion is normalised
+    result.w = 2 * Math.acos(q1.w); // angle
+    var s = Math.sqrt(1 - q1.w * q1.w); // assuming quaternion normalised then w is less than 1, so term always positive.
+    if (s < 0.001) { // test to avoid divide by zero, s is always positive due to sqrt
+        // if s close to zero then direction of axis not important
+        result.x = q1.x; // if it is important that axis is normalised then replace with x=1; y=z=0;
+        result.y = q1.y;
+        result.z = q1.z;
+    } else {
+        result.x = q1.x / s; // normalise axis
+        result.y = q1.y / s;
+        result.z = q1.z / s;
+    }
+
+    return result;
+};
+
+
+function AmmoQuaternionToAxisAngle(q1) {
+    var result = {
+        x: 0,
+        y: 0,
+        z: 0,
+        w: 0
+    };
+
+    if (q1.getX() > 1) q1.normalize(); // if w>1 acos and sqrt will produce errors, this cant happen if quaternion is normalised
+    result.w = 2 * Math.acos(q1.getW()); // angle
+    var s = Math.sqrt(1 - q1.getW() * q1.getW()); // assuming quaternion normalised then w is less than 1, so term always positive.
+    if (s < 0.001) { // test to avoid divide by zero, s is always positive due to sqrt
+        // if s close to zero then direction of axis not important
+        result.x = q1.getX(); // if it is important that axis is normalised then replace with x=1; y=z=0;
+        result.y = q1.getY();
+        result.z = q1.getZ();
+    } else {
+        result.x = q1.getX() / s; // normalise axis
+        result.y = q1.getY() / s;
+        result.z = q1.getZ() / s;
+    }
+
+    return result;
+};
+
+
 function Car(webTundraApp, position) {
     if (webTundraApp instanceof Application === false) {
         throw ("Instance of WebTundra application is required");
@@ -305,10 +427,14 @@ Car.prototype = {
                             }.bind(this));
                         }.bind(scope));
                     } else {
+                        var eulerOrd = "ZYX";
 
                         if (!ent.previousThreePos) {
                             // Save current position for next update
                             ent.previousThreePos = new THREE.Vector3();
+                            ent.previousRotation = new THREE.Euler();
+                            ent.previousRotation._order = eulerOrd;
+                            ent.previousRotation._quaternion = new THREE.Quaternion();
                             copyXyz(ent.placeable.transform.pos, ent.previousThreePos);
 
                             copyXyz(ent.placeable.transform.pos, ent.boxMesh.position);
@@ -322,61 +448,344 @@ Car.prototype = {
                             // console.log(ent.previousThreePos);
                             // console.log(ent.placeable.transform.pos);
 
+                            // Interpolate 
+
+                            // POSITION
                             var newPosition = new THREE.Vector3();
                             copyXyz(ent.placeable.transform.pos, newPosition);
 
-                            var newVelocity = newPosition.sub(ent.previousThreePos).multiplyScalar(1);
+                            var newVelocity = newPosition.sub(ent.previousThreePos).multiplyScalar(3);
                             ent.boxMesh.setLinearVelocity(newVelocity);
-                            // ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
 
-                            console.clear();
-                            console.log(newVelocity);
 
-                            // copyXyz(averagePos, ent.boxMesh.position);
+
+                            // ROTATION
+                            if (print) {
+                                // console.clear();
+                            }
+
+
+                            // console.clear();
+                            // console.log(ent.boxMesh.rotation._quaternion);
+
+
+
+                            // Tapani start------------------------------
+
+                            // // Current
+                            // var currentQ = new Ammo.btQuaternion(ent.previousRotation._quaternion.x, ent.previousRotation._quaternion.y, ent.previousRotation._quaternion.z, ent.previousRotation._quaternion.w);
+
+                            // // Target
+                            // var threeTargetRotation = new THREE.Euler();
+                            // threeTargetRotation._order = eulerOrd;
+                            // threeTargetRotation._quaternion = new THREE.Quaternion();
+                            // tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
+                            // var targetQ = new Ammo.btQuaternion(threeTargetRotation._quaternion.x, threeTargetRotation._quaternion.y, threeTargetRotation._quaternion.z, threeTargetRotation._quaternion.w);
+
+                            // // Dot
+                            // var dotProduct = currentQ.dot(targetQ);
+                            // if (dotProduct < 0) {
+                            //     targetQ = new Ammo.btQuaternion(targetQ.getX() * -1, targetQ.getY() * -1, targetQ.getZ() * -1, targetQ.getW() * -1);
+                            // }
+
+                            // console.log("---");
+                            // console.log("dot: " + dotProduct);
+                            // console.log("pre: " + ent.previousRotation._quaternion.y);
+                            // console.log("tar: " + threeTargetRotation._quaternion.y);
+
+                            // // Delta
+                            // var deltaQ = targetQ.op_sub(currentQ);
+                            // deltaQ = deltaQ.op_div(delta);
+
+                            // var tempQ = new THREE.Quaternion(deltaQ.getX(), deltaQ.getY(), deltaQ.getZ(), deltaQ.getW());
+                            // tempQ._euler = new THREE.Euler();
+                            // tempQ._euler._order = eulerOrd;
+                            // tempQ._updateEuler();
+
+                            // console.log("del: " + deltaQ.getY());
+
+                            // // Angular velocity
+                            // var speed = 0.1;
+                            // var tempY = deltaQ.getY() * speed;
+                            // if(tempY < 0) tempY *= -1;
+                            // angularVelo = new THREE.Vector3( /* deltaQ.getX() * speed */ 0, tempY, /* deltaQ.getZ() * speed */ 0);
+                            // // angularVelo = new THREE.Vector3(tempQ._euler._x * speed, tempQ._euler._y * speed, tempQ._euler._z * speed);
+
+                            // Tapani end------------------------------
+
+
+
+                            // AndrewK AMMO Q start------------------------------
+
+                            // //Current
+                            // var currentQ = new Ammo.btQuaternion(ent.previousRotation._quaternion.x, ent.previousRotation._quaternion.y, ent.previousRotation._quaternion.z, ent.previousRotation._quaternion.w);
+
+                            // // Target
+                            // var threeTargetRotation = new THREE.Euler();
+                            // threeTargetRotation._order = eulerOrd;
+                            // threeTargetRotation._quaternion = new THREE.Quaternion();
+                            // tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
+                            // var targetQ = new Ammo.btQuaternion(threeTargetRotation._quaternion.x, threeTargetRotation._quaternion.y, threeTargetRotation._quaternion.z, threeTargetRotation._quaternion.w);
+
+                            // // Dot
+                            // var dotProduct = currentQ.dot(targetQ);
+                            // if (dotProduct < 0) {
+                            //     targetQ = new Ammo.btQuaternion(targetQ.getX() * -1, targetQ.getY() * -1, targetQ.getZ() * -1, targetQ.getW() * -1);
+                            // }
+
+                            // // Delta
+                            // var deltaQ = targetQ.op_sub(currentQ);
+
+                            // conjBoxQuater = targetQ.inverse();
+                            // velQuater = deltaQ.op_mul(2);
+                            // velQuater = velQuater.op_div(delta * 1000);
+                            // var threeVelQuater = new THREE.Quaternion(velQuater.getX(), velQuater.getY(), velQuater.getZ(), velQuater.getW());
+                            // var threeConjBoxQuater = new THREE.Quaternion(conjBoxQuater.getX(), conjBoxQuater.getY(), conjBoxQuater.getZ(),conjBoxQuater.getW());
+
+                            // threeVelQuater.multiplyQuaternions(threeVelQuater, threeConjBoxQuater);
+
+                            // threeVelQuater._euler = new THREE.Euler();
+                            // threeVelQuater._euler._order = eulerOrd;
+                            // threeVelQuater._updateEuler();
+
+                            // // Angular velocity                      
+                            // var speed = 1;
+                            // angularVelo = new THREE.Vector3(threeVelQuater._euler._x * speed, threeVelQuater._euler._y * speed, threeVelQuater._euler._z * speed);
+
+                            // AndrewK AMMO Q end------------------------------
+
+
+
+                            // AndrewK THREE Q start------------------------------
+
+                            // // Target
+                            // var threeTargetRotation = new THREE.Euler();
+                            // threeTargetRotation._order = eulerOrd;
+                            // threeTargetRotation._quaternion = new THREE.Quaternion();
+                            // tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
+
+                            // // Dot
+                            // var dotProduct = threeTargetRotation._quaternion.x * ent.previousRotation._quaternion.x + threeTargetRotation._quaternion.y * ent.previousRotation._quaternion.y + threeTargetRotation._quaternion.z * ent.previousRotation._quaternion.z + threeTargetRotation._quaternion.w * ent.previousRotation._quaternion.w;
+                            // // if (dotProduct < 0) {
+                            // //     threeTargetRotation._quaternion.conjugate();
+                            // // }
+
+                            // console.log("---");
+                            // console.log("dot: " + dotProduct);
+                            // console.log("pre: " + ent.previousRotation._quaternion.x);
+                            // console.log("tar: " + threeTargetRotation._quaternion.x);
+
+                            // var diffQuater = Subtract(threeTargetRotation._quaternion, ent.previousRotation._quaternion);
+                            // var conjQuater = threeTargetRotation._quaternion.inverse();
+                            // var velQuater = MultiplyScalar(diffQuater, 2);
+                            // var multipler = 1 / (delta * 100);
+                            // velQuater = MultiplyScalar(velQuater, multipler);
+                            // velQuater = velQuater.multiplyQuaternions(velQuater, conjQuater);
+
+                            // velQuater._euler = new THREE.Euler();
+                            // velQuater._euler._order = eulerOrd;
+                            // velQuater._updateEuler();
+
+
+                            // console.log("del: " + diffQuater.x);
+
+                            // // Angular velocity
+                            // var speed = 1;
+                            // angularVelo = new THREE.Vector3(/* velQuater._euler._x * speed*/ 0, velQuater._euler._y * speed, /* velQuater._euler._z * speed */ 0);
+                            // // var angularVelo = new THREE.Vector3( Math.cos(velQuater._euler.y) * Math.cos(velQuater._euler.z) * speed, Math.sin(velQuater._euler.y) * Math.cos(velQuater._euler.z) * speed, Math.sin(velQuater._euler.z) * speed);
+                            // // angularVelo = new THREE.Vector3(velQuater.x * speed, velQuater.y * speed, velQuater.z * speed);
+
+                            // AndrewK THREE Q end------------------------------
+
+
+
+                            // Sam THREE Q start------------------------------
+
+                            // // Target
+                            // var threeTargetRotation = new THREE.Euler();
+                            // threeTargetRotation._order = eulerOrd;
+                            // threeTargetRotation._quaternion = new THREE.Quaternion();
+                            // tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
+
+                            // var diffQuater = threeTargetRotation._quaternion.multiplyQuaternions(threeTargetRotation._quaternion, ent.previousRotation._quaternion.inverse());
+                            // var conjQuater = ent.previousRotation._quaternion.inverse();
+                            // // var multipler = 1 / (delta * 10);
+                            // // var velQuater = MultiplyScalar(diffQuater, multipler);
+                            // var velQuater = Qexp(Qlog(diffQuater));
+
+                            // // velQuater = MultiplyScalar(velQuater, 2);
+                            // velQuater = velQuater.multiplyQuaternions(velQuater, conjQuater);
+
+                            // velQuater._euler = new THREE.Euler();
+                            // velQuater._euler._order = eulerOrd;
+                            // velQuater._updateEuler();
+
+                            // // Angular velocity
+                            // var speed = 1;
+                            // angularVelo = new THREE.Vector3(velQuater._euler._x * speed, velQuater._euler._y * speed, velQuater._euler._z * speed);
+                            // // var angularVelo = new THREE.Vector3( Math.cos(velQuater._euler.y) * Math.cos(velQuater._euler.z) * speed, Math.sin(velQuater._euler.y) * Math.cos(velQuater._euler.z) * speed, Math.sin(velQuater._euler.z) * speed);
+                            // // angularVelo = new THREE.Vector3(velQuater.x * speed, velQuater.y * speed, velQuater.z * speed);
+
+                            // Sam THREE Q end------------------------------
+
+
+                            // Sam THREE Q LITE start------------------------------
+
+                            // // Target
+                            // var threeTargetRotation = new THREE.Euler();
+                            // threeTargetRotation._order = eulerOrd;
+                            // threeTargetRotation._quaternion = new THREE.Quaternion();
+                            // tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
+
+                            // // Dot
+                            // var dotProduct = (threeTargetRotation._quaternion.x * ent.previousRotation._quaternion.x) + (threeTargetRotation._quaternion.y * ent.previousRotation._quaternion.y) + (threeTargetRotation._quaternion.z * ent.previousRotation._quaternion.z) + (threeTargetRotation._quaternion.w * ent.previousRotation._quaternion.w);
+
+
+
+                            // if (dotProduct < 0.7 && dotProduct > -0.7) {
+                            //     // ent.previousRotation._quaternion.inverse();
+                            //     // threeTargetRotation._quaternion.inverse();
+                            //     // ent.previousRotation._quaternion.conjugate();
+                            //     //     // threeTargetRotation._quaternion.conjugate();
+
+                            //     console.log("---");
+                            //     // console.log("dot: " + dotProduct);
+                            //     // console.log(ent.boxMesh.rotation._quaternion);
+
+                            //     // ent.boxMesh.position.distanceTo(new THREE.Vector3( x, y, z );)
+
+                            //     // continue;
+                            // }
+                            // if (print) {
+                            //     console.log("---");
+                            //     // console.log("dot: " + dotProduct);
+                            //     // console.log(ent.boxMesh.rotation._quaternion);
+
+                            // }
+
+                            // // if (print) {
+                            // //     console.log("---");
+                            // //     console.log("dot: " + dotProduct);
+                            // //     console.log("pre: " + ent.boxMesh.rotation._quaternion.y);
+                            // //     console.log("tar: " + threeTargetRotation._quaternion.y);
+                            // // }
+
+                            // var diffQuater = threeTargetRotation._quaternion.multiplyQuaternions(threeTargetRotation._quaternion, ent.previousRotation._quaternion.inverse());
+
+                            // diffQuater._euler = new THREE.Euler();
+                            // diffQuater._euler._order = eulerOrd;
+                            // diffQuater._updateEuler();
+
+                            // if (print) {
+                            //     console.log("del: " + diffQuater.y);
+                            // }
+
+                            // // Angular velocity
+                            // var speed = 1;
+                            // angularVelo = new THREE.Vector3(diffQuater._euler._x * speed, diffQuater._euler._y * speed, diffQuater._euler._z * speed);
+
+                            // Sam THREE Q LITE end------------------------------
+
+
+                            // Axis-angle THREE Q start------------------------------
+
+                            // // Target
+                            // var threeTargetRotation = new THREE.Euler();
+                            // threeTargetRotation._order = eulerOrd;
+                            // threeTargetRotation._quaternion = new THREE.Quaternion();
+                            // tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
+
+                            // // Dot
+                            // var dotProduct = threeTargetRotation._quaternion.x * ent.previousRotation._quaternion.x + threeTargetRotation._quaternion.y * ent.previousRotation._quaternion.y + threeTargetRotation._quaternion.z * ent.previousRotation._quaternion.z + threeTargetRotation._quaternion.w * ent.previousRotation._quaternion.w;
+                            // if (dotProduct < 0) {
+                            //     threeTargetRotation._quaternion.conjugate();
+                            // }
+
+                            // console.log("---");
+                            // console.log("dot: " + dotProduct);
+                            // console.log("pre: " + ent.previousRotation._quaternion.y);
+                            // console.log("tar: " + threeTargetRotation._quaternion.y);
+
+                            // var diffQuater = Subtract(threeTargetRotation._quaternion, ent.previousRotation._quaternion);
+                            // var conjQuater = threeTargetRotation._quaternion.inverse();
+                            // var velQuater = MultiplyScalar(diffQuater, 2);
+                            // var multipler = 1 / (delta * 100);
+                            // velQuater = MultiplyScalar(velQuater, multipler);
+                            // velQuater = velQuater.multiplyQuaternions(velQuater, conjQuater);
+
+                            // var axisAngle = QuaternionToAxisAngle(velQuater);
+
+
+                            // console.log("del: " + diffQuater.y);
+                            // console.log("aa : " + axisAngle.y);
+
+                            // // Angular velocity
+                            // var speed = 1;
+
+                            // angularVelo = new THREE.Vector3(/*axisAngle.x * speed */0, axisAngle.y * speed, /* axisAngle.z * speed */ 0);
+
+                            // Axis-angle THREE Q end------------------------------
+
+
+                            // Animate with slerp -----------------------------------
+                            ent.threeTargetRotation = new THREE.Euler();
+                            ent.threeTargetRotation._order = eulerOrd;
+                            ent.threeTargetRotation._quaternion = new THREE.Quaternion();
+                            tundraToThreeEuler(ent.placeable.transform.rot, ent.threeTargetRotation, this.app.viewer.degToRad);
+                            ent.slerpTime = 0;
+                            // Animate with slerp end -----------------------------------
+
+
+
+                            // ent.boxMesh.setAngularVelocity(angularVelo);
+
+
+
                             copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
-                            ent.boxMesh.__dirtyRotation = true;
-                            tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
+
+                            // Debug hover car
+                            // ent.boxMesh.__dirtyPosition = true;
+                            // ent.boxMesh.position.y = 5;
 
                             // Save current position for next update
                             ent.previousThreePos = ent.boxMesh.position;
+                            ent.previousRotation = ent.boxMesh.rotation;
+                            ent.previousRotation._order = eulerOrd;
+                            ent.previousRotation._quaternion._updateEuler();
 
-                            // copyXyz(ent.placeable.transform.pos, ent.boxMesh.position);
-                            // copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
-                            // tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
+                        }
+                        if(ent.previousRotation && ent.threeTargetRotation) {
+                           
 
-                            // var found = false;
-                            // // Loop touches of the local vehicle
-                            // for (var i = 0; i < this.vehicle.mesh._physijs.touches.length; i++) {
-                            //     if (ent.boxMesh._physijs === this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs && this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs.isRemoteObject) {
-                            //         found = true;
-                            //         break;
-                            //     }
-                            // }
+                            // Animate with slerp -----------------------------------
 
-                            // if (found === false) {
-                            // console.log("set pos and velo");
-                            // Set velocity to boxMesh
-                            // ent.boxMesh.setLinearVelocity(new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z));
-                            // ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
-                            // } else {
-                            //     // debugger;
-                            //     // console.log("don't set velo");
-                            // }
+                            ent.slerpTime += delta * 5;
 
-                            // var averageLinearVelocity = {
-                            //     x: (ent.dynamicComponent.linearVelocity.x + ent.boxMesh.getLinearVelocity().x) / 2,
-                            //     y: (ent.dynamicComponent.linearVelocity.y + ent.boxMesh.getLinearVelocity().y) / 2,
-                            //     z: (ent.dynamicComponent.linearVelocity.z + ent.boxMesh.getLinearVelocity().z) / 2
-                            // };
-                            // ent.boxMesh.setLinearVelocity(new THREE.Vector3(averageLinearVelocity.x, averageLinearVelocity.y, averageLinearVelocity.z));
-                            // ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
+                            ent.boxMesh.__dirtyRotation = true;
 
-                        } else {
-                            // console.log("don't set position");
+                            var newRot = ent.previousRotation.clone();
+                            // newRot._quaternion = ent.previousRotation._quaternion.clone();
+                            // ent.boxMesh.rotation._quaternion = newRot._quaternion.slerp(ent.threeTargetRotation._quaternion, delta * 10);
+
+                            ent.boxMesh.rotation._quaternion = ent.boxMesh.rotation._quaternion.slerp(ent.threeTargetRotation._quaternion, ent.slerpTime);       
+
+                            ent.boxMesh.rotation._quaternion._euler = new THREE.Euler();
+                            ent.boxMesh.rotation._quaternion._euler._order = eulerOrd;
+                            ent.boxMesh.rotation._quaternion._updateEuler();
+                            ent.boxMesh.rotation = ent.boxMesh.rotation._quaternion._euler;
+
+                            console.clear();
+                            console.log(delta);
+                            console.log(ent.slerpTime);
+                            console.log(ent.boxMesh.rotation);
+                            console.log(ent.threeTargetRotation);
+
+                            // Animate with slerp end -----------------------------------
+
                         }
 
                         // console.clear();
-                        // console.log(ent.boxMesh.getLinearVelocity());
+                        // console.log(ent.box Mesh.getLinearVelocity());
 
                     }
                 }
