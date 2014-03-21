@@ -774,11 +774,11 @@ Car.prototype = {
                             ent.boxMesh.rotation._quaternion._updateEuler();
                             ent.boxMesh.rotation = ent.boxMesh.rotation._quaternion._euler;
 
-                            console.clear();
-                            console.log(delta);
-                            console.log(ent.slerpTime);
-                            console.log(ent.boxMesh.rotation);
-                            console.log(ent.threeTargetRotation);
+                            // console.clear();
+                            // console.log(delta);
+                            // console.log(ent.slerpTime);
+                            // console.log(ent.boxMesh.rotation);
+                            // console.log(ent.threeTargetRotation);
 
                             // Animate with slerp end -----------------------------------
 
