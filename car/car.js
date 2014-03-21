@@ -305,9 +305,17 @@ Car.prototype = {
                             }.bind(this));
                         }.bind(scope));
                     } else {
+                        if (ent.previousThreePos) {
+                            var transformVec = new THREE.Vector3(ent.placeable.transform.pos.x, ent.placeable.transform.pos.y, ent.placeable.transform.pos.z);
+                            var errorVec = new THREE.Vector3();
+                            errorVec.subVectors(ent.previousThreePos, transformVec);
+                            console.clear();
+                            console.log("length: " + errorVec.length());
+                            console.log("length: " + errorVec.lengthSq());
+                        }
 
-                        if (!ent.previousThreePos || !(ent.previousThreePos.x == ent.placeable.transform.pos.x && ent.previousThreePos.y == ent.placeable.transform.pos.y && ent.previousThreePos.z == ent.placeable.transform.pos.z)) {
-                            // console.log("set position");
+                        if (errorVec === undefined || errorVec.length() > 9) {
+                            console.log("set position");
 
                             // console.clear();
                             // console.log(ent.previousThreePos);
@@ -340,10 +348,15 @@ Car.prototype = {
                             // copyXyz(ent.placeable.transform.pos, ent.boxMesh.position);
                             // copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
                             // tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
+                        } else {
+                            console.log("don't set position");
+                        }
 
+                        if (!ent.previousLinearVelocity || !(ent.previousLinearVelocity.x == ent.dynamicComponent.linearVelocity.x && ent.previousLinearVelocity.y == ent.dynamicComponent.linearVelocity.y && ent.previousLinearVelocity.z == ent.dynamicComponent.linearVelocity.z)) {
                             var found = false;
                             // Loop touches of the local vehicle
                             for (var i = 0; i < this.vehicle.mesh._physijs.touches.length; i++) {
+                                console.log("for " + i);
                                 if (ent.boxMesh._physijs === this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs && this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs.isRemoteObject) {
                                     found = true;
                                     break;
@@ -351,25 +364,16 @@ Car.prototype = {
                             }
 
                             if (found === false) {
-                                // console.log("set pos and velo");
+                                console.log("set velo");
                                 // Set velocity to boxMesh
-                                ent.boxMesh.setLinearVelocity(new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z));
+                                var newVelocity = new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z);
+                                ent.boxMesh.setLinearVelocity(newVelocity);
                                 ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
+                                ent.previousLinearVelocity = newVelocity;
                             } else {
                                 // debugger;
-                                // console.log("don't set velo");
+                                console.log("don't set velo");
                             }
-
-                            // var averageLinearVelocity = {
-                            //     x: (ent.dynamicComponent.linearVelocity.x + ent.boxMesh.getLinearVelocity().x) / 2,
-                            //     y: (ent.dynamicComponent.linearVelocity.y + ent.boxMesh.getLinearVelocity().y) / 2,
-                            //     z: (ent.dynamicComponent.linearVelocity.z + ent.boxMesh.getLinearVelocity().z) / 2
-                            // };
-                            // ent.boxMesh.setLinearVelocity(new THREE.Vector3(averageLinearVelocity.x, averageLinearVelocity.y, averageLinearVelocity.z));
-                            // ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
-
-                        } else {
-                            // console.log("don't set position");
                         }
 
                         // console.clear();
