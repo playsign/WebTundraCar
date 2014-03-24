@@ -353,27 +353,27 @@ Car.prototype = {
                         }
 
                         if (!ent.previousLinearVelocity || !(ent.previousLinearVelocity.x == ent.dynamicComponent.linearVelocity.x && ent.previousLinearVelocity.y == ent.dynamicComponent.linearVelocity.y && ent.previousLinearVelocity.z == ent.dynamicComponent.linearVelocity.z)) {
-                            var found = false;
-                            // Loop touches of the local vehicle
-                            for (var i = 0; i < this.vehicle.mesh._physijs.touches.length; i++) {
-                                console.log("for " + i);
-                                if (ent.boxMesh._physijs === this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs && this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs.isRemoteObject) {
-                                    found = true;
-                                    break;
-                                }
-                            }
+                            // var found = false;
+                            // // Loop touches of the local vehicle
+                            // for (var i = 0; i < this.vehicle.mesh._physijs.touches.length; i++) {
+                            //     console.log("for " + i);
+                            //     if (ent.boxMesh._physijs === this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs && this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs.isRemoteObject) {
+                            //         found = true;
+                            //         break;
+                            //     }
+                            // }
 
-                            if (found === false) {
+                            // if (found === false) {
                                 console.log("set velo");
                                 // Set velocity to boxMesh
                                 var newVelocity = new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z);
                                 ent.boxMesh.setLinearVelocity(newVelocity);
                                 ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
                                 ent.previousLinearVelocity = newVelocity;
-                            } else {
-                                // debugger;
-                                console.log("don't set velo");
-                            }
+                            // } else {
+                            //     // debugger;
+                            //     console.log("don't set velo");
+                            // }
                         }
 
                         // console.clear();
