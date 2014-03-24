@@ -41,12 +41,26 @@ function Car(webTundraApp, position) {
     this.scale = 0.5;
     this.useCameraFollow = false;
 
+    // Default vehicle properties
+    this.mass = 1500;
+    this.suspension_stiffness = 10.88;
+    this.suspension_compression = 1.83;
+    this.suspension_damping = 0.28;
+    this.max_suspension_travel = 500;
+    this.friction_slip = 10.5;
+    this.max_suspension_force = 6000;
+    this.engineForwardForce = 1200;
+    this.engineBackwardForce = -1000;
+    this.brakeAmount = 250;
+    this.steeringDeceleration = 0.5;
+    this.steeringMax = 0.6
+
     var loader = new THREE.JSONLoader();
     this.clock = new THREE.Clock();
 
     loader.load("car/GreenCarBase.js", function(car, car_materials) {
         loader.load("car/GreenCarWheel.js", function(wheel_geometry, wheel_materials) {
-            var mass = 1500;
+            var mass = this.mass;
             var mesh = new Physijs.BoxMesh(
                 car,
                 new THREE.MeshFaceMaterial(car_materials),
@@ -55,17 +69,17 @@ function Car(webTundraApp, position) {
             mesh.castShadow = mesh.receiveShadow = true;
 
             this.vehicle = new Physijs.Vehicle(mesh, new Physijs.VehicleTuning(
-                10.88,
-                1.83,
-                0.28,
-                500,
-                10.5,
-                6000));
-            this.vehicle.engineForwardForce = 1200;
-            this.vehicle.engineBackwardForce = -1000;
-            this.vehicle.brakeAmount = 250;
-            this.vehicle.steeringDeceleration = 0.5;
-            this.vehicle.steeringMax = 0.6;
+                this.suspension_stiffness,
+                this.suspension_compression,
+                this.suspension_damping,
+                this.max_suspension_travel,
+                this.friction_slip,
+                this.max_suspension_force));
+            this.vehicle.engineForwardForce = this.engineForwardForce;
+            this.vehicle.engineBackwardForce = this.engineBackwardForce;
+            this.vehicle.brakeAmount = this.brakeAmount;
+            this.vehicle.steeringDeceleration = this.steeringDeceleration;
+            this.vehicle.steeringMax = this.steeringMax;
             this.app.viewer.scene.add(this.vehicle);
 
             var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
@@ -364,12 +378,12 @@ Car.prototype = {
                             // }
 
                             // if (found === false) {
-                                console.log("set velo");
-                                // Set velocity to boxMesh
-                                var newVelocity = new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z);
-                                ent.boxMesh.setLinearVelocity(newVelocity);
-                                ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
-                                ent.previousLinearVelocity = newVelocity;
+                            console.log("set velo");
+                            // Set velocity to boxMesh
+                            var newVelocity = new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z);
+                            ent.boxMesh.setLinearVelocity(newVelocity);
+                            ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
+                            ent.previousLinearVelocity = newVelocity;
                             // } else {
                             //     // debugger;
                             //     console.log("don't set velo");
