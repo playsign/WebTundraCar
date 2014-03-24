@@ -409,30 +409,9 @@ Car.prototype = {
                             ent.boxMesh.__dirtyPosition = true;
                             ent.boxMesh.__dirtyRotation = true;
 
-                            // Greatly reduces "saw" motion
-                            var averagePos = {
-                                x: (ent.boxMesh.position.x + ent.placeable.transform.pos.x) / 2,
-                                y: (ent.boxMesh.position.y + ent.placeable.transform.pos.y) / 2,
-                                z: (ent.boxMesh.position.z + ent.placeable.transform.pos.z) / 2
-                            };
-
-                            // Rotation                      
-                            var tempThreeRot = new THREE.Vector3();
-                            tundraToThreeEuler(ent.placeable.transform.rot, tempThreeRot, this.app.viewer.degToRad);
-                            // console.log(ent.boxMesh.rotation.order);
-                            // ent.boxMesh.rotation.order = "XYZ";
-                            ent.boxMesh.rotation.x = (ent.boxMesh.rotation.x + tempThreeRot.x) / 2;
-                            ent.boxMesh.rotation.y = (ent.boxMesh.rotation.y + tempThreeRot.y) / 2;
-                            ent.boxMesh.rotation.z = (ent.boxMesh.rotation.z + tempThreeRot.z) / 2;
-
-                            copyXyz(averagePos, ent.boxMesh.position);
+                            copyXyz(ent.placeable.transform.pos, ent.boxMesh.position);
                             copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
                             tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
-                            ent.previousThreePos = ent.placeable.transform.pos;
-
-                            // copyXyz(ent.placeable.transform.pos, ent.boxMesh.position);
-                            // copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
-                            // tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
                         } else {
                             console.log("don't set position");
                         }
