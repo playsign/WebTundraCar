@@ -12,8 +12,10 @@ function Car(webTundraApp, position) {
         throw ("Instance of WebTundra application is required");
     }
 
-    if (!position) {
-        position = new THREE.Vector3();
+    if (position) {
+        this.spawnPosition = position;
+    } else {
+        this.spawnPosition = new THREE.Vector3();
     }
 
     this.app = webTundraApp;
@@ -53,7 +55,7 @@ function Car(webTundraApp, position) {
     this.engineBackwardForce = -1000;
     this.brakeAmount = 250;
     this.steeringDeceleration = 0.5;
-    this.steeringMax = 0.6
+    this.steeringMax = 0.6;
 
     var loader = new THREE.JSONLoader();
     this.clock = new THREE.Clock();
@@ -65,7 +67,7 @@ function Car(webTundraApp, position) {
                 car,
                 new THREE.MeshFaceMaterial(car_materials),
                 mass);
-            mesh.position = position;
+            mesh.position = this.spawnPosition.clone();
             mesh.castShadow = mesh.receiveShadow = true;
 
             this.vehicle = new Physijs.Vehicle(mesh, new Physijs.VehicleTuning(
@@ -101,7 +103,9 @@ function Car(webTundraApp, position) {
             this.input = {
                 power: null,
                 direction: null,
-                steering: 0
+                steering: 0,
+                brakeRear: 0,
+                brakeFront: 0
             };
         }.bind(this));
     }.bind(this));
@@ -197,11 +201,13 @@ Car.prototype = {
 
             // Brake
             if (this.app.keyboard.pressed(this.keyconfig.brake) || this.app.keyboard.pressed(this.keyconfig.brakeSecondary)) {
-                this.vehicle.setBrake(this.vehicle.brakeAmount, 2);
-                this.vehicle.setBrake(this.vehicle.brakeAmount, 3);
+                this.input.brakeRear = this.vehicle.brakeAmount;
+                this.vehicle.setBrake(this.input.brakeRear, 2);
+                this.vehicle.setBrake(this.input.brakeRear, 3);
             } else {
-                this.vehicle.setBrake(0, 2);
-                this.vehicle.setBrake(0, 3);
+                this.input.brakeRear = 0;
+                this.vehicle.setBrake(this.input.brakeRear, 2);
+                this.vehicle.setBrake(this.input.brakeRear, 3);
             }
 
             // Update engine and steering
@@ -234,6 +240,8 @@ Car.prototype = {
         if (this.app.connected) {
             // Apply mustang boxmesh transform to corresponding placeable transform
             if (this.reservedCar !== undefined && this.vehicle !== undefined) {
+                // TRANSFORM
+
                 // Set a new position for the entity
                 var newTransform = this.reservedCar.placeable.transform;
 
@@ -253,7 +261,9 @@ Car.prototype = {
 
                 this.reservedCar.placeable.transform = newTransform;
 
-                // Set velocity to dynamic component
+                // DYNAMIC COMPONENT
+
+                // Set velocity
                 this.reservedCar.dynamicComponent.linearVelocity = {
                     x: this.vehicle.mesh.getLinearVelocity().x,
                     y: this.vehicle.mesh.getLinearVelocity().y,
@@ -264,6 +274,11 @@ Car.prototype = {
                     y: this.vehicle.mesh.getAngularVelocity().y,
                     z: this.vehicle.mesh.getAngularVelocity().z
                 };
+
+                this.reservedCar.dynamicComponent.steering = this.input.steering;
+                this.reservedCar.dynamicComponent.brakeFront = this.input.brakeFront;
+                this.reservedCar.dynamicComponent.brakeRear = this.input.brakeRear;
+                this.reservedCar.dynamicComponent.engineForce = this.vehicle.engineForceAmount;
             }
 
             // Apply new received car placeable positions (excluding our car) to corresponding placeable transforms
@@ -285,51 +300,107 @@ Car.prototype = {
                         var scope = {
                             entity: ent,
                             car: this,
-                        }
+                        };
+
+                        // loader.load("car/GreenCarBase.js", function(car, car_materials) {
+                        //     loader.load("car/GreenCarWheel.js", function(wheel_geometry, wheel_materials) {
+                        //         var newCar = this.entity;
+                        //         console.log("loader.load");
+
+                        //         var mass = 1500;
+                        //         newCar.boxMesh = new Physijs.BoxMesh(
+                        //             car,
+                        //             new THREE.MeshFaceMaterial(car_materials),
+                        //             mass);
+                        //         // newCar.boxMesh._physijs.collision_flags = 2; // set as kinematic
+                        //         newCar.boxMesh._physijs.isRemoteObject = true; // custom physijs property
+                        //         newCar.boxMesh.castShadow = newCar.boxMesh.receiveShadow = true;
+
+                        //         this.car.app.viewer.scene.add(newCar.boxMesh);
+
+                        //         var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
+
+                        //         for (var i = 0; i < 4; i++) {
+                        //             // Wheel properties
+                        //             var wheelProperties = this.car.getWheelProperties(i);
+
+                        //             // Wheel mesh
+                        //             var wheelMesh = new THREE.Mesh(wheel_geometry, wheel_material);
+                        //             wheelMesh.castShadow = wheelMesh.receiveShadow = true;
+                        //             wheelMesh.position.copy(wheelProperties.wheel_direction).multiplyScalar(wheelProperties.suspension_rest_length / 100).add(wheelProperties.connection_point);
+                        //             newCar.boxMesh.add(wheelMesh);
+                        //             // this.wheels.push(wheelMesh);
+                        //         }
+                        //     }.bind(this));
+                        // }.bind(scope));
+                        var loader = new THREE.JSONLoader();
 
                         loader.load("car/GreenCarBase.js", function(car, car_materials) {
                             loader.load("car/GreenCarWheel.js", function(wheel_geometry, wheel_materials) {
                                 var newCar = this.entity;
-                                console.log("loader.load");
 
-                                var mass = 1500;
+                                var mass = this.car.mass;
                                 newCar.boxMesh = new Physijs.BoxMesh(
                                     car,
                                     new THREE.MeshFaceMaterial(car_materials),
                                     mass);
-                                // newCar.boxMesh._physijs.collision_flags = 2; // set as kinematic
-                                newCar.boxMesh._physijs.isRemoteObject = true; // custom physijs property
+                                newCar.boxMesh.position = this.car.spawnPosition;
                                 newCar.boxMesh.castShadow = newCar.boxMesh.receiveShadow = true;
 
-                                this.car.app.viewer.scene.add(newCar.boxMesh);
+                                newCar.boxMesh.vehicle = new Physijs.Vehicle(newCar.boxMesh, new Physijs.VehicleTuning(
+                                    this.car.suspension_stiffness,
+                                    this.car.suspension_compression,
+                                    this.car.suspension_damping,
+                                    this.car.max_suspension_travel,
+                                    this.car.friction_slip,
+                                    this.car.max_suspension_force));
+                                newCar.boxMesh.vehicle.engineForwardForce = this.car.engineForwardForce;
+                                newCar.boxMesh.vehicle.engineBackwardForce = this.car.engineBackwardForce;
+                                newCar.boxMesh.vehicle.brakeAmount = this.car.brakeAmount;
+                                newCar.boxMesh.vehicle.steeringDeceleration = this.car.steeringDeceleration;
+                                newCar.boxMesh.vehicle.steeringMax = this.car.steeringMax;
+                                this.car.app.viewer.scene.add(newCar.boxMesh.vehicle);
 
                                 var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
 
                                 for (var i = 0; i < 4; i++) {
-                                    // Wheel properties
                                     var wheelProperties = this.car.getWheelProperties(i);
 
-                                    // Wheel mesh
-                                    var wheelMesh = new THREE.Mesh(wheel_geometry, wheel_material);
-                                    wheelMesh.castShadow = wheelMesh.receiveShadow = true;
-                                    wheelMesh.position.copy(wheelProperties.wheel_direction).multiplyScalar(wheelProperties.suspension_rest_length / 100).add(wheelProperties.connection_point);
-                                    newCar.boxMesh.add(wheelMesh);
-                                    // this.wheels.push(wheelMesh);
+                                    newCar.boxMesh.vehicle.addWheel(
+                                        wheel_geometry,
+                                        wheel_material,
+                                        wheelProperties.connection_point,
+                                        wheelProperties.wheel_direction,
+                                        wheelProperties.wheel_axle,
+                                        wheelProperties.suspension_rest_length,
+                                        wheelProperties.wheel_radius,
+                                        i < 2 ? false : true);
                                 }
+
+                                // this.car.input = {
+                                //     power: null,
+                                //     direction: null,
+                                //     steering: 0
+                                // };
                             }.bind(this));
                         }.bind(scope));
                     } else {
-                        if (ent.previousThreePos) {
-                            var transformVec = new THREE.Vector3(ent.placeable.transform.pos.x, ent.placeable.transform.pos.y, ent.placeable.transform.pos.z);
-                            var errorVec = new THREE.Vector3();
-                            errorVec.subVectors(ent.previousThreePos, transformVec);
-                            console.clear();
-                            console.log("length: " + errorVec.length());
-                            console.log("length: " + errorVec.lengthSq());
-                        }
+                        var errorVec = undefined;
+                        // if (ent.previousThreePos) {
+                        var transformVec = new THREE.Vector3(ent.placeable.transform.pos.x, ent.placeable.transform.pos.y, ent.placeable.transform.pos.z);
+                        errorVec = new THREE.Vector3();
+                        // errorVec.subVectors(ent.previousThreePos, transformVec);
+                        errorVec.subVectors(ent.boxMesh.position, transformVec);
+                        // console.clear();
+                        // console.log("length: " + errorVec.length());
+                        // console.log("length: " + errorVec.lengthSq());
+                        // }
 
                         if (errorVec === undefined || errorVec.length() > 9) {
                             console.log("set position");
+                            if (errorVec !== undefined) {
+                                console.log("error length: " + errorVec.length());
+                            }
 
                             // console.clear();
                             // console.log(ent.previousThreePos);
@@ -350,9 +421,9 @@ Car.prototype = {
                             tundraToThreeEuler(ent.placeable.transform.rot, tempThreeRot, this.app.viewer.degToRad);
                             // console.log(ent.boxMesh.rotation.order);
                             // ent.boxMesh.rotation.order = "XYZ";
-                            ent.boxMesh.rotation.x = (ent.boxMesh.rotation.x + tempThreeRot.x) / 2,
-                            ent.boxMesh.rotation.y = (ent.boxMesh.rotation.y + tempThreeRot.y) / 2,
-                            ent.boxMesh.rotation.z = (ent.boxMesh.rotation.z + tempThreeRot.z) / 2
+                            ent.boxMesh.rotation.x = (ent.boxMesh.rotation.x + tempThreeRot.x) / 2;
+                            ent.boxMesh.rotation.y = (ent.boxMesh.rotation.y + tempThreeRot.y) / 2;
+                            ent.boxMesh.rotation.z = (ent.boxMesh.rotation.z + tempThreeRot.z) / 2;
 
                             copyXyz(averagePos, ent.boxMesh.position);
                             copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
@@ -378,21 +449,46 @@ Car.prototype = {
                             // }
 
                             // if (found === false) {
-                            console.log("set velo");
+                            // console.log("set velo");
                             // Set velocity to boxMesh
                             var newVelocity = new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z);
                             ent.boxMesh.setLinearVelocity(newVelocity);
-                            ent.boxMesh.setAngularVelocity(new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z));
                             ent.previousLinearVelocity = newVelocity;
                             // } else {
                             //     // debugger;
                             //     console.log("don't set velo");
                             // }
                         }
+                        if (!ent.previousAngularVelocity || !(ent.previousAngularVelocity.x == ent.dynamicComponent.angularVelocity.x && ent.previousAngularVelocity.y == ent.dynamicComponent.angularVelocity.y && ent.previousAngularVelocity.z == ent.dynamicComponent.angularVelocity.z)) {
+                            var newAngVelocity = new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z);
+                            ent.boxMesh.setAngularVelocity(newAngVelocity);
+                            ent.previousAngularVelocity = newAngVelocity;
+                        }
 
-                        // console.clear();
-                        // console.log(ent.boxMesh.getLinearVelocity());
+                        // Steering
+                        if (!ent.previousSteering || ent.dynamicComponent.steering != ent.previousSteering) {
+                            ent.boxMesh.vehicle.setSteering(ent.dynamicComponent.steering, 0); // (amount, wheel)
+                            ent.boxMesh.vehicle.setSteering(ent.dynamicComponent.steering, 1);
+                            ent.previousSteering = ent.dynamicComponent.steering;
+                        }
 
+                        // Brake
+                        if (!ent.previousBrakeFront || ent.dynamicComponent.brakeFront != ent.previousBrakeFront) {
+                            ent.boxMesh.vehicle.setBrake(ent.dynamicComponent.brakeFront, 0);
+                            ent.boxMesh.vehicle.setBrake(ent.dynamicComponent.brakeFront, 1);
+                            ent.previousBrakeFront = ent.dynamicComponent.brakeFront;
+                        }
+                        if (!ent.previousBrakeRear || ent.dynamicComponent.brakeRear != ent.previousBrakeRear) {
+                            ent.boxMesh.vehicle.setBrake(ent.dynamicComponent.brakeRear, 2);
+                            ent.boxMesh.vehicle.setBrake(ent.dynamicComponent.brakeRear, 3);
+                            ent.previousBrakeRear = ent.dynamicComponent.brakeRear;
+                        }
+
+                        // Engine force
+                        if (!ent.previousEngineForce || ent.dynamicComponent.engineForce != ent.previousEngineForce) {
+                            ent.boxMesh.vehicle.applyEngineForce(ent.dynamicComponent.engineForce);
+                            ent.previousEngineForce = ent.dynamicComponent.engineForce;
+                        }
                     }
                 }
             }
