@@ -50,6 +50,14 @@ function CreateCar(playerID) {
 	attrs.SetAttribute("linearVelocity", zeroFloat3);
 	attrs.CreateAttribute("float3", "angularVelocity");
 	attrs.SetAttribute("angularVelocity", zeroFloat3);
+	attrs.CreateAttribute("real", "steering");
+	attrs.SetAttribute("steering", 0);
+	attrs.CreateAttribute("real", "brakeFront");
+	attrs.SetAttribute("brakeFront", 0);
+	attrs.CreateAttribute("real", "brakeRear");
+	attrs.SetAttribute("brakeRear", 0);
+	attrs.CreateAttribute("real", "engineForce");
+	attrs.SetAttribute("engineForce", 0);
 
 	// List of cars
 	var cars = scene.EntitiesWithComponent("EC_DynamicComponent", "Car");
