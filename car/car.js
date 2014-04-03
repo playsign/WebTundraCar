@@ -251,14 +251,11 @@ Car.prototype = {
                 newTransform.pos.y = this.vehicle.mesh.position.y;
                 newTransform.pos.z = this.vehicle.mesh.position.z;
                 // Rotation
-                var r = this.vehicle.mesh.rotation;
-                var e = new THREE.Euler(r.x, r.y, r.z, "ZYX");
-                this.vehicle.mesh.quaternion.setFromEuler(e);
-                /*
-                this.vehicle.mesh.quaternion._euler._order = "ZYX";
-                newTransform.rot.x = Math.degrees(this.vehicle.mesh.rotation.x);
-                newTransform.rot.y = Math.degrees(this.vehicle.mesh.rotation.y);
-                newTransform.rot.z = Math.degrees(this.vehicle.mesh.rotation.z); */
+                var e = new THREE.Euler(0, 0, 0, "ZYX");
+                e.setFromQuaternion(this.vehicle.mesh.quaternion, undefined, false);
+                newTransform.rot.x = Math.degrees(e.x);
+                newTransform.rot.y = Math.degrees(e.y);
+                newTransform.rot.z = Math.degrees(e.z);
 
                 // console.clear();
                 // console.log(this.vehicle.mesh.rotation);
@@ -392,7 +389,7 @@ Car.prototype = {
                                 newPos.addVectors(ent.boxMesh.position, errorVec.clone().multiplyScalar(0.05));
 
                                 // Rotation
-                                var threeTargetRotation = new THREE.Euler();
+                                var threeTargetRotation = new THREE.Euler(0,0,0,"ZYX");
                                 tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
 
                                 var newRot = ent.boxMesh.quaternion.clone();
@@ -404,9 +401,7 @@ Car.prototype = {
                                 ent.boxMesh.__dirtyRotation = true;
 
                                 ent.boxMesh.position = newPos;
-                                var e = new THREE.Euler();
-                                e.setFromQuaternion(newRot);
-                                ent.boxMesh.rotation = e;
+                                ent.boxMesh.quaternion = newRot;
                             }
                             var newVelocity = new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z);
                             ent.boxMesh.setLinearVelocity(newVelocity);
