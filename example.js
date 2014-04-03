@@ -1,5 +1,5 @@
 "use strict";
-
+/* globals Tundra, Physijs, THREE, Stats, CarApp, Car, PhysijsView */
 // For conditions of distribution and use, see copyright notice in LICENSE
 
 /*
@@ -13,7 +13,7 @@ var ground_material;
 
 function init() {
     app = new CarApp();
-    var host = "10.10.2.7"; // hostname of the Tundra server
+    var host = "localhost"; // hostname of the Tundra server
     var port = 2345; // and port to the server
 
     app.start();
@@ -170,10 +170,10 @@ function init() {
 }
 
 function CarApp() {
-    Application.call(this); // Super class
+    Tundra.Application.call(this); // Super class
 }
 
-CarApp.prototype = new Application();
+CarApp.prototype = new Tundra.Application();
 
 CarApp.prototype.constructor = CarApp;
 
@@ -190,7 +190,6 @@ CarApp.prototype.logicUpdate = function(dt) {
     // var timeStep = 1 / 60;
     // var maxSubSteps = 5;
     // this.viewer.scene.simulate(timeStep, maxSubSteps); // run physics
-    
     this.viewer.scene.simulate(); // run physics
 
     if (this.physics_stats) {

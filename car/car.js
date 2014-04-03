@@ -1,4 +1,5 @@
 "use strict";
+/* globals Tundra, Physijs, THREE, Stats, CarApp, Car, PhysijsView */
 
 // For conditions of distribution and use, see copyright notice in LICENSE
 
@@ -8,7 +9,7 @@
  */
 
 function Car(webTundraApp, position) {
-    if (webTundraApp instanceof Application === false) {
+    if (webTundraApp instanceof Tundra.Application === false) {
         throw ("Instance of WebTundra application is required");
     }
 
@@ -250,10 +251,11 @@ Car.prototype = {
                 newTransform.pos.y = this.vehicle.mesh.position.y;
                 newTransform.pos.z = this.vehicle.mesh.position.z;
                 // Rotation
-                this.vehicle.mesh.quaternion._euler._order = "ZYX";
-                newTransform.rot.x = Math.degrees(this.vehicle.mesh.rotation.x);
-                newTransform.rot.y = Math.degrees(this.vehicle.mesh.rotation.y);
-                newTransform.rot.z = Math.degrees(this.vehicle.mesh.rotation.z);
+                var e = new THREE.Euler(0, 0, 0, "ZYX");
+                e.setFromQuaternion(this.vehicle.mesh.quaternion, undefined, false);
+                newTransform.rot.x = Math.degrees(e.x);
+                newTransform.rot.y = Math.degrees(e.y);
+                newTransform.rot.z = Math.degrees(e.z);
 
                 // console.clear();
                 // console.log(this.vehicle.mesh.rotation);
@@ -302,37 +304,6 @@ Car.prototype = {
                             car: this,
                         };
 
-                        // loader.load("car/GreenCarBase.js", function(car, car_materials) {
-                        //     loader.load("car/GreenCarWheel.js", function(wheel_geometry, wheel_materials) {
-                        //         var newCar = this.entity;
-                        //         console.log("loader.load");
-
-                        //         var mass = 1500;
-                        //         newCar.boxMesh = new Physijs.BoxMesh(
-                        //             car,
-                        //             new THREE.MeshFaceMaterial(car_materials),
-                        //             mass);
-                        //         // newCar.boxMesh._physijs.collision_flags = 2; // set as kinematic
-                        //         newCar.boxMesh._physijs.isRemoteObject = true; // custom physijs property
-                        //         newCar.boxMesh.castShadow = newCar.boxMesh.receiveShadow = true;
-
-                        //         this.car.app.viewer.scene.add(newCar.boxMesh);
-
-                        //         var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
-
-                        //         for (var i = 0; i < 4; i++) {
-                        //             // Wheel properties
-                        //             var wheelProperties = this.car.getWheelProperties(i);
-
-                        //             // Wheel mesh
-                        //             var wheelMesh = new THREE.Mesh(wheel_geometry, wheel_material);
-                        //             wheelMesh.castShadow = wheelMesh.receiveShadow = true;
-                        //             wheelMesh.position.copy(wheelProperties.wheel_direction).multiplyScalar(wheelProperties.suspension_rest_length / 100).add(wheelProperties.connection_point);
-                        //             newCar.boxMesh.add(wheelMesh);
-                        //             // this.wheels.push(wheelMesh);
-                        //         }
-                        //     }.bind(this));
-                        // }.bind(scope));
                         var loader = new THREE.JSONLoader();
 
                         loader.load("car/GreenCarBase.js", function(car, car_materials) {
@@ -410,26 +381,6 @@ Car.prototype = {
                             copyXyz(ent.placeable.transform.scale, ent.boxMesh.scale);
                             tundraToThreeEuler(ent.placeable.transform.rot, ent.boxMesh.rotation, this.app.viewer.degToRad);
                         }
-                        // else {
-                        //     // Position
-                        //     var newPos = new THREE.Vector3();
-                        //     newPos.addVectors(ent.boxMesh.position, errorVec.clone().multiplyScalar(0.05));
-
-                        //     // Rotation
-                        //     var threeTargetRotation = new THREE.Euler();
-                        //     threeTargetRotation._quaternion = new THREE.Quaternion();
-                        //     tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
-                        //     var newRot = ent.boxMesh.quaternion.clone();
-                        //     newRot._euler = new THREE.Euler();
-                        //     newRot.slerp(threeTargetRotation._quaternion, 0.5);
-                        //     newRot._updateEuler();
-
-                        //     ent.boxMesh.__dirtyPosition = true;
-                        //     ent.boxMesh.__dirtyRotation = true;
-
-                        //     ent.boxMesh.position = newPos;
-                        //     ent.boxMesh.rotation = newRot._euler;
-                        // }
 
                         if (!ent.previousLinearVelocity || !(ent.previousLinearVelocity.x == ent.dynamicComponent.linearVelocity.x && ent.previousLinearVelocity.y == ent.dynamicComponent.linearVelocity.y && ent.previousLinearVelocity.z == ent.dynamicComponent.linearVelocity.z)) {
                             if (errorVec !== undefined || errorVec.length() < 9) {
@@ -438,41 +389,23 @@ Car.prototype = {
                                 newPos.addVectors(ent.boxMesh.position, errorVec.clone().multiplyScalar(0.05));
 
                                 // Rotation
-                                var threeTargetRotation = new THREE.Euler();
-                                threeTargetRotation._quaternion = new THREE.Quaternion();
+                                var threeTargetRotation = new THREE.Euler(0,0,0,"ZYX");
                                 tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
+
                                 var newRot = ent.boxMesh.quaternion.clone();
-                                newRot._euler = new THREE.Euler();
-                                newRot.slerp(threeTargetRotation._quaternion, 0.5);
-                                newRot._updateEuler();
+                                var rotationQuat = new THREE.Quaternion();
+                                rotationQuat.setFromEuler(threeTargetRotation);
+                                newRot.slerp(rotationQuat, 0.5);
 
                                 ent.boxMesh.__dirtyPosition = true;
                                 ent.boxMesh.__dirtyRotation = true;
 
                                 ent.boxMesh.position = newPos;
-                                ent.boxMesh.rotation = newRot._euler;
+                                ent.boxMesh.quaternion = newRot;
                             }
-
-                            // var found = false;
-                            // // Loop touches of the local vehicle
-                            // for (var i = 0; i < this.vehicle.mesh._physijs.touches.length; i++) {
-                            //     console.log("for " + i);
-                            //     if (ent.boxMesh._physijs === this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs && this.vehicle.world._objects[this.vehicle.mesh._physijs.touches[i]]._physijs.isRemoteObject) {
-                            //         found = true;
-                            //         break;
-                            //     }
-                            // }
-
-                            // if (found === false) {
-                            // console.log("set velo");
-                            // Set velocity to boxMesh
                             var newVelocity = new THREE.Vector3(ent.dynamicComponent.linearVelocity.x, ent.dynamicComponent.linearVelocity.y, ent.dynamicComponent.linearVelocity.z);
                             ent.boxMesh.setLinearVelocity(newVelocity);
                             ent.previousLinearVelocity = newVelocity;
-                            // } else {
-                            //     // debugger;
-                            //     console.log("don't set velo");
-                            // }
                         }
                         if (!ent.previousAngularVelocity || !(ent.previousAngularVelocity.x == ent.dynamicComponent.angularVelocity.x && ent.previousAngularVelocity.y == ent.dynamicComponent.angularVelocity.y && ent.previousAngularVelocity.z == ent.dynamicComponent.angularVelocity.z)) {
                             var newAngVelocity = new THREE.Vector3(ent.dynamicComponent.angularVelocity.x, ent.dynamicComponent.angularVelocity.y, ent.dynamicComponent.angularVelocity.z);
