@@ -9,7 +9,7 @@
 
 function PhysijsView() {
 
-    ThreeView.call(this); // call super constructor.
+    Tundra.ThreeView.call(this); // call super constructor.
 
     Physijs.scripts.worker = 'physijs_worker.js';
     Physijs.scripts.ammo = 'ammo.js';
@@ -24,8 +24,23 @@ function PhysijsView() {
     });
 }
 
-PhysijsView.prototype = Object.create(ThreeView.prototype);
+PhysijsView.prototype = Object.create(Tundra.ThreeView.prototype);
 PhysijsView.prototype.constructor = PhysijsView;
+
+PhysijsView.prototype.onComponentAddedOrChanged = function(entity, component,changeType, changedAttr) {
+    Tundra.ThreeView.prototype.onComponentAddedOrChanged.call(this, entity, component, changeType, changedAttr);
+    if (component instanceof Tundra.EC_RigidBody)
+        this.onRigidBodyAddedOrChanged(entity, component);
+};
+
+PhysijsView.prototype.onRigidBodyAddedOrChanged = function(entity, rigidBodyComponent) {
+    var prevPhysiMesh = rigidBodyComponent.physiMesh;
+    if (prevPhysiMesh) {
+        console.log("unhandled prev physijs mesh");
+    }
+        
+
+};
 
 PhysijsView.prototype.createScene = function() {
     return new Physijs.Scene();
