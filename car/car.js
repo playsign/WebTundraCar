@@ -389,7 +389,7 @@ Car.prototype = {
                                 newPos.addVectors(ent.boxMesh.position, errorVec.clone().multiplyScalar(0.05));
 
                                 // Rotation
-                                var threeTargetRotation = new THREE.Euler(0,0,0,"ZYX");
+                                var threeTargetRotation = new THREE.Euler(0, 0, 0, "ZYX");
                                 tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
 
                                 var newRot = ent.boxMesh.quaternion.clone();
@@ -441,8 +441,15 @@ Car.prototype = {
                 }
             }
 
-            // Inform the server about the change
-            this.app.dataConnection.syncManager.sendChanges();
+            if (this.reservedCar && (isNaN(this.reservedCar.threeGroup.position.x) ||isNaN(this.reservedCar.dynamicComponent.engineForce))) {
+               console.warn("app.car.reservedCar.threeGroup.position.x is NaN");
+            } else {
+                // Inform the server about the change
+                this.app.dataConnection.syncManager.sendChanges();
+            }
+
+
+
         }
 
         // Camera follow
