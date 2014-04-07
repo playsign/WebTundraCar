@@ -386,7 +386,11 @@ Car.prototype = {
                             if (errorVec !== undefined || errorVec.length() < 9) {
                                 // Position
                                 var newPos = new THREE.Vector3();
-                                newPos.addVectors(ent.boxMesh.position, errorVec.clone().multiplyScalar(0.05));
+
+                                /* Correction affects how aggressively we correct car's position towards its new position. It's 0.05 in stunt rally, but it seems to be too low for webtundra (the car would lag behind). 
+                                https://github.com/stuntrally/stuntrally/blob/499b079d4478b4a6e4b114ba1fc0c94aec7b5c1d/source/vdrift/car.cpp#L332*/                                
+                                var correction = 0.5;
+                                newPos.addVectors(ent.boxMesh.position, errorVec.clone().multiplyScalar(correction));
 
                                 // Rotation
                                 var threeTargetRotation = new THREE.Euler(0, 0, 0, "ZYX");
@@ -396,6 +400,8 @@ Car.prototype = {
                                 var rotationQuat = new THREE.Quaternion();
                                 rotationQuat.setFromEuler(threeTargetRotation);
                                 newRot.slerp(rotationQuat, 0.5);
+
+                                //
 
                                 ent.boxMesh.__dirtyPosition = true;
                                 ent.boxMesh.__dirtyRotation = true;
@@ -441,8 +447,8 @@ Car.prototype = {
                 }
             }
 
-            if (this.reservedCar && (isNaN(this.reservedCar.threeGroup.position.x) ||isNaN(this.reservedCar.dynamicComponent.engineForce))) {
-               console.warn("app.car.reservedCar.threeGroup.position.x is NaN");
+            if (this.reservedCar && (isNaN(this.reservedCar.threeGroup.position.x) || isNaN(this.reservedCar.dynamicComponent.engineForce))) {
+                console.warn("app.car.reservedCar.threeGroup.position.x is NaN");
             } else {
                 // Inform the server about the change
                 this.app.dataConnection.syncManager.sendChanges();
