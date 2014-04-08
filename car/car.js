@@ -198,6 +198,7 @@ Car.prototype = {
                 this.vehicle.engineForceAmount = this.vehicle.engineBackwardForce;
             } else {
                 this.input.power = false;
+                this.vehicle.engineForceAmount = 0;
             }
 
             // Brake
