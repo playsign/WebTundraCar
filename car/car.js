@@ -8,10 +8,15 @@
  *      Date: 2014
  */
 
-function Car(webTundraApp, position) {
-    if (webTundraApp instanceof Tundra.Application === false) {
-        throw ("Instance of WebTundra application is required");
-    }
+ define([
+        "core/framework/TundraSDK",
+        "core/framework/TundraLogging"
+    ], function(TundraSDK, TundraLogging) {
+
+function Car(position) {
+    // if (tundraSDK instanceof Tundra.Application === false) {
+    //     throw ("Instance of WebTundra application is required");
+    // }
 
     if (position) {
         this.spawnPosition = position.clone();
@@ -19,7 +24,7 @@ function Car(webTundraApp, position) {
         this.spawnPosition = new THREE.Vector3();
     }
 
-    this.app = webTundraApp;
+    this.app = TundraSDK;
     this.keyconfig = {
         // Steer left
         left: "left",
@@ -64,8 +69,8 @@ function Car(webTundraApp, position) {
     var loader = new THREE.JSONLoader();
     this.clock = new THREE.Clock();
 
-    loader.load("car/GreenCarBase.js", function(car, car_materials) {
-        loader.load("car/GreenCarWheel.js", function(wheel_geometry, wheel_materials) {
+    loader.load("../src/plugins/WebTundraCar/car//GreenCarBase.js", function(car, car_materials) {
+        loader.load("../src/plugins/WebTundraCar/car//GreenCarWheel.js", function(wheel_geometry, wheel_materials) {
             var mass = this.mass;
             var mesh = new Physijs.BoxMesh(
                 car,
@@ -87,7 +92,7 @@ function Car(webTundraApp, position) {
             this.vehicle.steeringAcceleration = this.steeringAcceleration;
             this.vehicle.steeringDeceleration = this.steeringDeceleration;
             this.vehicle.steeringMax = this.steeringMax;
-            this.app.viewer.scene.add(this.vehicle);
+            this.app.renderer.scene.add(this.vehicle);
 
             var wheel_material = new THREE.MeshFaceMaterial(wheel_materials);
 
@@ -127,9 +132,10 @@ function Car(webTundraApp, position) {
         return x < a ? a : (x > b ? b : x);
     };
 
-    this.app.dataConnection.client.connected.add(this.connectionEstablished.bind(this));
+    TundraSDK.framework.client.onConnected(this, this.connectionEstablished);
 
-    requestAnimationFrame(this.update.bind(this));
+    // requestAnimationFrame(this.update.bind(this));
+    TundraSDK.framework.frame.onUpdate(this, this.update);
 }
 
 Car.prototype = {
@@ -269,18 +275,18 @@ Car.prototype = {
             }
         }
 
-        // Camera follow
-        if (this.useCameraFollow && this.vehicle) {
-            var relativeCameraOffset = new THREE.Vector3(0, 3, -15);
+        // // Camera follow
+        // if (this.useCameraFollow && this.vehicle) {
+        //     var relativeCameraOffset = new THREE.Vector3(0, 3, -15);
 
-            var cameraOffset = relativeCameraOffset.applyMatrix4(this.vehicle.mesh.matrixWorld);
+        //     var cameraOffset = relativeCameraOffset.applyMatrix4(this.vehicle.mesh.matrixWorld);
 
-            this.app.viewer.camera.position.x = cameraOffset.x;
-            this.app.viewer.camera.position.y = cameraOffset.y;
-            this.app.viewer.camera.position.z = cameraOffset.z;
-            this.app.viewer.camera.lookAt(this.vehicle.mesh.position);
-            this.app.viewer.camera.position.y += 3;
-        }
+        //     this.app.viewer.camera.position.x = cameraOffset.x;
+        //     this.app.viewer.camera.position.y = cameraOffset.y;
+        //     this.app.viewer.camera.position.z = cameraOffset.z;
+        //     this.app.viewer.camera.lookAt(this.vehicle.mesh.position);
+        //     this.app.viewer.camera.position.y += 3;
+        // }
 
         requestAnimationFrame(function() {
             this.update();
@@ -382,8 +388,8 @@ Car.prototype = {
 
             var loader = new THREE.JSONLoader();
 
-            loader.load("car/GreenCarBase.js", function(car, car_materials) {
-                loader.load("car/GreenCarWheel.js", function(wheel_geometry, wheel_materials) {
+            loader.load("../src/plugins/WebTundraCar/car/GreenCarBase.js", function(car, car_materials) {
+                loader.load("../src/plugins/WebTundraCar/GreenCarWheel.js", function(wheel_geometry, wheel_materials) {
                     var newCar = this.entity;
 
                     var mass = this.car.mass;
@@ -471,7 +477,7 @@ Car.prototype = {
 
                     // Rotation
                     var threeTargetRotation = new THREE.Euler(0, 0, 0, "ZYX");
-                    tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, this.app.viewer.degToRad);
+                    tundraToThreeEuler(ent.placeable.transform.rot, threeTargetRotation, THREE.Math.degToRad);
 
                     var newRot = ent.boxMesh.quaternion.clone();
                     var rotationQuat = new THREE.Quaternion();
@@ -524,3 +530,7 @@ Car.prototype = {
 
     }
 };
+
+return Car;
+
+});
