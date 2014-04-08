@@ -57,6 +57,7 @@ function Car(webTundraApp, position) {
     this.engineForwardForce = 1200;
     this.engineBackwardForce = -1000;
     this.brakeAmount = 250;
+    this.steeringAcceleration = 0.5;
     this.steeringDeceleration = 0.5;
     this.steeringMax = 0.6;
 
@@ -83,6 +84,7 @@ function Car(webTundraApp, position) {
             this.vehicle.engineForwardForce = this.engineForwardForce;
             this.vehicle.engineBackwardForce = this.engineBackwardForce;
             this.vehicle.brakeAmount = this.brakeAmount;
+            this.vehicle.steeringAcceleration = this.steeringAcceleration;
             this.vehicle.steeringDeceleration = this.steeringDeceleration;
             this.vehicle.steeringMax = this.steeringMax;
             this.app.viewer.scene.add(this.vehicle);
@@ -222,7 +224,7 @@ Car.prototype = {
             // Update engine and steering
             if (this.input && this.vehicle) {
                 if (this.input.direction !== 0) {
-                    this.input.steering += this.input.direction / 50;
+                    this.input.steering += this.input.direction * this.vehicle.steeringAcceleration * delta;
                     if (this.input.steering < -this.vehicle.steeringMax) this.input.steering = -this.vehicle.steeringMax;
                     if (this.input.steering > this.vehicle.steeringMax) this.input.steering = this.vehicle.steeringMax;
                 } else {
@@ -402,6 +404,7 @@ Car.prototype = {
                     newCar.boxMesh.vehicle.engineForwardForce = this.car.engineForwardForce;
                     newCar.boxMesh.vehicle.engineBackwardForce = this.car.engineBackwardForce;
                     newCar.boxMesh.vehicle.brakeAmount = this.car.brakeAmount;
+                    newCar.boxMesh.vehicle.steeringAcceleration = this.car.steeringAcceleration;
                     newCar.boxMesh.vehicle.steeringDeceleration = this.car.steeringDeceleration;
                     newCar.boxMesh.vehicle.steeringMax = this.car.steeringMax;
                     this.car.app.viewer.scene.add(newCar.boxMesh.vehicle);
