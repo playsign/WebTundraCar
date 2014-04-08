@@ -14,7 +14,7 @@ function Car(webTundraApp, position) {
     }
 
     if (position) {
-        this.spawnPosition = position;
+        this.spawnPosition = position.clone();
     } else {
         this.spawnPosition = new THREE.Vector3();
     }
@@ -35,7 +35,9 @@ function Car(webTundraApp, position) {
         deccelerateSecondary: "s",
         // Brake
         brake: "space",
-        brakeSecondary: "ctrl"
+        brakeSecondary: "ctrl",
+        // Reset
+        reset: "r"
     };
     this.serverCarCtrl = undefined;
     this.reservedCar = undefined;
@@ -180,6 +182,11 @@ Car.prototype = {
 
         // INPUT
         if (this.input) {
+            // Reset
+            if (this.app.keyboard.pressed(this.keyconfig.reset)) {
+                this.resetLocalCar();
+            }
+
             // Steering
             if (this.app.keyboard.pressed(this.keyconfig.left) || this.app.keyboard.pressed(this.keyconfig.leftSecondary)) {
                 this.input.direction = 1;
@@ -278,6 +285,38 @@ Car.prototype = {
         }.bind(this));
     },
 
+    resetLocalCar: function() {
+        this.vehicle.mesh.__dirtyPosition = true;
+        this.vehicle.mesh.__dirtyRotation = true;
+
+        // POSITION
+
+        this.vehicle.mesh.position = this.spawnPosition.clone();
+
+        var newTransform = this.reservedCar.placeable.transform;
+
+        newTransform.pos.x = this.vehicle.mesh.position.x;
+        newTransform.pos.y = this.vehicle.mesh.position.y;
+        newTransform.pos.z = this.vehicle.mesh.position.z;
+
+        // ROTATION
+
+        this.vehicle.mesh.quaternion = new THREE.Quaternion();
+
+        var e = new THREE.Euler(0, 0, 0, "ZYX");
+        e.setFromQuaternion(this.vehicle.mesh.quaternion, undefined, false);
+        newTransform.rot.x = Math.degrees(e.x);
+        newTransform.rot.y = Math.degrees(e.y);
+        newTransform.rot.z = Math.degrees(e.z);
+
+        this.reservedCar.placeable.transform = newTransform;
+
+        // VELOCITY
+
+        this.vehicle.mesh.setLinearVelocity(new THREE.Vector3());
+        this.vehicle.mesh.setAngularVelocity(new THREE.Vector3());
+    },
+
     updateLocalCarEntity: function() {
         // TRANSFORM
 
@@ -350,7 +389,7 @@ Car.prototype = {
                         car,
                         new THREE.MeshFaceMaterial(car_materials),
                         mass);
-                    newCar.boxMesh.position = this.car.spawnPosition;
+                    newCar.boxMesh.position = this.car.spawnPosition.clone();
                     newCar.boxMesh.castShadow = newCar.boxMesh.receiveShadow = true;
 
                     newCar.boxMesh.vehicle = new Physijs.Vehicle(newCar.boxMesh, new Physijs.VehicleTuning(
