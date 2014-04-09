@@ -1,5 +1,5 @@
 "use strict";
-/* globals Tundra, Physijs, THREE, Stats, CarApp, Car, PhysijsView */
+/* globals Tundra, Physijs, THREE, Stats, ExampleApp, Car, PhysijsView */
 // For conditions of distribution and use, see copyright notice in LICENSE
 
 /*
@@ -12,7 +12,7 @@ var app;
 var ground_material;
 
 function init() {
-    app = new CarApp();
+    app = new ExampleApp();
     var host = "localhost"; // hostname of the Tundra server
     var port = 2345; // and port to the server
 
@@ -169,19 +169,19 @@ function init() {
     app.connect(host, port);
 }
 
-function CarApp() {
+function ExampleApp() {
     Tundra.Application.call(this); // Super class
 }
 
-CarApp.prototype = new Tundra.Application();
+ExampleApp.prototype = new Tundra.Application();
 
-CarApp.prototype.constructor = CarApp;
+ExampleApp.prototype.constructor = ExampleApp;
 
-CarApp.prototype.createViewer = function() {
+ExampleApp.prototype.createViewer = function() {
     return new PhysijsView();
 };
 
-CarApp.prototype.logicUpdate = function(dt) {
+ExampleApp.prototype.logicUpdate = function(dt) {
 
     // PHYSICS
 
