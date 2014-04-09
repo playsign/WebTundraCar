@@ -7,10 +7,13 @@ define([
         "view/threejs/ThreeJsRenderer",
         "view/threejs/asset/ThreeJsonAsset",
         "view/threejs/entity-components/EC_Mesh_ThreeJs",
-        "view/threejs/entity-components/EC_Placeable_ThreeJs"
+        "view/threejs/entity-components/EC_Placeable_ThreeJs",
+        "plugins/WebTundraCar/physi"
     ], function(Class, THREE, TundraSDK, TundraLogging, Scene, ThreeJsRenderer, ThreeJsonAsset,
                 EC_Mesh_ThreeJs,
-                EC_Placeable_ThreeJs) {
+                EC_Placeable_ThreeJs,
+                physijs) {
+        console.log(physijs)
 /**
     Three.js renderer implementation that is accessible from {{#crossLink "TundraClient/renderer:property"}}TundraClient.renderer{{/crossLink}}
 
