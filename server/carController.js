@@ -78,14 +78,14 @@ function CreateCar(playerID) {
 // Player connected
 
 function ServerHandleUserConnected(userID, userConnection) { //(11d)
-	console.LogInfo("username: " + userConnection.Property("name"));
+	console.LogInfo("unique id: " + userConnection.Property("uniqueID"));
 	console.LogInfo("player amount: " + playerAmount);
 
-	players.push(userConnection.Property("name"));
+	players.push(userConnection.Property("uniqueID"));
 
 	playerAmount++;
 
-	CreateCar(userConnection.Property("name"));
+	CreateCar(userConnection.Property("uniqueID"));
 }
 
 // Player disconnected
@@ -93,7 +93,7 @@ function ServerHandleUserConnected(userID, userConnection) { //(11d)
 function ServerHandleUserDisconnected(userID, userConnection) {
 	console.LogInfo("user disconnected:");
 	// console.LogInfo("userConnection.id: " + userConnection.id);
-	console.LogInfo("user name: " + userConnection.Property("name"));
+	console.LogInfo("user name: " + userConnection.Property("uniqueID"));
 
 	if (spectatorAmount === 0) {
 		playerAmount--;
@@ -102,7 +102,7 @@ function ServerHandleUserDisconnected(userID, userConnection) {
 	}
 
 	for (var i = 0; i < players.length; i++) {
-		if (players[i] === userConnection.Property("name")) {
+		if (players[i] === userConnection.Property("uniqueID")) {
 			players.splice(i, 1);
 		}
 	}
@@ -116,7 +116,7 @@ function ServerHandleUserDisconnected(userID, userConnection) {
 	for (var i = 0; i < carList.length; i++) {
 		var car = scene.EntityById(carList[i]);
 
-		if (car.dynamiccomponent.GetAttribute("playerID") == userConnection.Property("name")) {
+		if (car.dynamiccomponent.GetAttribute("playerID") == userConnection.Property("uniqueID")) {
 			console.LogInfo("Remove car: " + carList[i]);
 			scene.RemoveEntity(carList[i]);			
 
